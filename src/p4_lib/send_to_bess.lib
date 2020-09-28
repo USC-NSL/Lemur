@@ -1,0 +1,100 @@
+############################################################
+#
+# SEND_TO_BESS.LIB
+# This will send the current packet to the server path.
+#
+############################################################
+
+default_prefix = nshencap
+
+add macro(CPU_PORT, 8)
+add macro(BESS_PORT, 9)
+
+add_const(TYPE_NSH, bit<16>, 0x894F)
+add_const(TYPE_IPV4, bit<16>, 0x0800)
+add_const(TYPE_NSH_IPV4, bit<8>, 0x01)
+
+
+/*
+ * Header Definition Part (Done)
+ */
+#define Ethernet
+#define NSH
+#define IPv4
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 2, {TYPE_IPV4:IPv4, TYPE_NSH:NSH })
+set IPv4(None, 0, {})
+set NSH(nextProto, 1, {TYPE_NSH_IPV4:IPv4})
+add parser( Ethernet )
+
+# MyIngress
+
+action init_metadata() {
+}
+
+action drop() {
+	mark_to_drop();
+}
+
+action setup_nsh_header() {
+	hdr.nsh.version = (bit<2>)0x0;
+	hdr.nsh.oBit = 0;
+	hdr.nsh.uBit = 0;
+	hdr.nsh.ttl = (bit<6>)63;
+	hdr.nsh.totalLength = (bit<6>)0x6;
+	hdr.nsh.unsign = 0;
+	hdr.nsh.md = 0x1; // fixed length
+	hdr.nsh.nextProto = 0x01; // IPv4
+	hdr.nsh.spi = meta.service_path_id;
+	hdr.nsh.si = meta.service_id;
+	hdr.nsh.context = (bit<128>)0x1234;
+}
+
+action valid_nsh_header() {
+	hdr.nsh.setValid();
+	hdr.ethernet.etherType = TYPE_NSH;
+}
+
+action remove_nsh_header() {
+	meta.service_path_id = hdr.nsh.spi;
+	meta.service_id = hdr.nsh.si;
+	hdr.nsh.setInvalid();
+	hdr.ethernet.etherType = TYPE_IPV4;
+}
+
+action send_to_bess() {
+	standard_metadata.egress_spec = BESS_PORT;
+}
+
+action send_to_controller() {
+	standard_metadata.egress_spec = CPU_PORT;
+}
+
+
+apply {
+	// for NSHEncap module, we only need to set up the self.nsh_flag
+	
+	meta.nsh_flag = (bit<4>)1;
+	meta.forward_flag = (bit<4>)0;
+}
+
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, NSH, Ethernet]
+add deparser( deparser_seq )
+

@@ -1,0 +1,202 @@
+############################################################
+#
+# NAT.LIB
+# This will perform the simple NAT functions.
+#
+# Author: Jane, Jianfeng
+############################################################
+
+default_prefix = nattrans
+
+add_const(TYPE_NSH, bit<16>, 0x894F)
+add_const(TYPE_IPV4, bit<16>, 0x0800)
+add_const(TYPE_NSH_IPV4, bit<8>, 0x01)
+add_const(TYPE_TCP, bit<8>, 0x06)
+
+/*
+ * Header Definition Part (Done)
+ */
+#define Ethernet
+#define NSH
+#define IPv4
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+add metadata(do_forward, bit<1>)
+add metadata(is_ext_if, bit<1>)
+add metadata(if_index, bit<9>)
+add metadata(add_NSH, bit<1>)
+add metadata(ipv4_sa, bit<32>)
+add metadata(ipv4_da, bit<32>)
+add metadata(nhop_ipv4, bit<32>)
+add metadata(if_ipv4_addr, bit<32>)
+add metadata(if_mac_addr, bit<48>)
+add metadata(srcPort, bit<16>)
+add metadata(dstPort, bit<16>)
+add metadata(pktlength, bit<16>)
+add metadata(SPI, bit<24>)
+add metadata(SI, bit<8>)
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 2, {TYPE_IPV4:IPv4, TYPE_NSH:NSH})
+set NSH(nextProto, 1, {TYPE_NSH_IPV4: IPv4})
+set IPv4(nextProto, 1, {TYPE_TCP: TCP})
+set TCP(None, 0, {})
+add parser( Ethernet )
+
+
+/*
+ * P4 MyIngress Part
+ */
+
+action drop(){
+	mark_to_drop();
+}
+
+action set_if_info(bit<32> ipv4_addr, bit<32> mac_addr, bit<1> is_ext){
+	metadata.if_ipv4_addr = ipv4_addr;
+	metadata.if_mac_addr = mac_addr;
+	metadata.is_ext_if = is_ext;
+}
+
+table if_info{
+	key = {
+		metadata.if_index: exact;
+	}
+	actions = {
+		drop;
+		set_if_info;
+	}
+}
+
+action nat_miss_ext_to_int(){
+	metadata.do_forward = 0;
+	drop();
+}
+
+action change_type(){
+	hdr.ethernet.etherType = ETHERTYPE_IPV4;
+}
+
+action change_nhop(bit<32> addr){
+	metadata.nhop_ipv4 = addr;
+	metadata.ipv4_da = addr;
+	hdr.ethernet.etherType = ETHERTYPE_NSH;
+}
+
+action nat_hit_int_to_ext(bit<32> srcAddr, bit<16> srcPort){
+	metadata.do_forward = 1;
+	metadata.ipv4_sa = srcAddr;
+	metadata.srcPort = srcPort;
+}
+
+action nat_hit_ext_to_int(bit<32> dstAddr, bit<16> dstPort){
+	metadata.do_forward = 1;
+	metadata.ipv4_da = dstAddr;
+	metadata.dstPort = dstPort;
+}
+
+action nat_no_nat(){
+	metadata.do_forward = 1;
+}
+
+table nat{
+	key = {
+		metadata.is_ext_if: exact;
+		hdr.ipv4.isValid(): exact;
+		hdr.tcp.isValid(): exact;
+		hdr.ipv4_srcAddr: ternary;
+		hdr.ipv4_dstAddr: ternary;
+		metadata.srcPort: ternary;
+		metadata.dstport: ternary;
+	}
+	actions = {
+		drop;
+		nat_miss_int_to_ext;
+		nat_hit_int_to_ext;
+		nat_hit_ext_to_int;
+		nat_no_nat;
+	}
+	default action = drop;
+}
+
+action set_nhop(bit<32> nhop_ipv4, egressSpec_t port){
+	metadata.nhop_ipv4 = nhop_ipv4;
+	standard_metadata.egress_spec = port;
+	hdr.ipv4.ttl = hdr.ipv4.ttl-1;
+}
+
+table ipv4_lpm{
+	key = {
+		metadata.ipv4_da: lpm;
+	}
+	actions = {
+		set_nhop;
+		drop;
+	}
+}
+
+action set_dmac(bit<48> dmac){
+	hdr.ethernet.dstAddr = dmac;
+}
+
+table forward{
+	key = {
+		metadata.nhop_ipv4: exact;
+	}
+	actions = {
+	set_dmac;
+	drop;
+	}
+}
+
+apply{
+	if_info.apply();
+	nat.apply();
+	if(metadata.do_forward == 1 && hdr.ipv4.ttl >0){
+		ipv4_lpm.apply();
+		forward.apply();
+	}
+}
+
+/* egress action & table*/
+
+action drop(){
+	mark_to_drop();
+}
+
+action set_tcp(){
+	hdr.tcp.srcPort = metadata.srcPort;
+	hdr.tcp.dstPort = metadata.dstPort;
+}
+
+action do_rewrites(bit<48> smac){
+	hdr.ethernet.srcAddr = smac;
+	hdr.ipv4.srcAddr = metadata.ipv4_sa;
+	hdr.ipv4.dstAddr = metadata.ipv4_da;
+	set_tcp();
+}
+
+table send_frames{
+	key = {
+		standard_metadata.egress_port: exact;
+	}
+	actions = {
+		do_rewrites;
+		drop;
+	}
+}
+
+apply{
+	if(standard_metadata.instance_type == 0){
+		send_frame.apply();
+	}
+}
+
+/* deparser */
+deparser_seq = [TCP, IPV4, Ethernet]
+add_deparser(deparser_seq)

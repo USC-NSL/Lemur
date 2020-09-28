@@ -1,0 +1,88 @@
+
+/* 
+ * The NFCP library for the Hash Load Balancer
+ *
+ * NFCP libraries are created by the NFCP developers.
+ * To use Hash Load Balancer, specify HashLB module in the NF chaining phase
+ */
+
+default_prefix = hashlb
+
+add macro(BRANCH_NUM, 4)
+add macro(TYPE_IPV4, 0x0800)
+add macro(TYPE_TCP, 0x06)
+add macro(TYPE_UDP, 0x11)
+
+/*
+ * Header Definition Part (Done)
+ */
+
+#define Ethernet
+#define IPv4
+#define TCP
+#define UDP
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(protocol, 2, {TYPE_TCP:TCP, TYPE_UDP:UDP})
+set TCP(None, 0, {})
+set UDP(None, 0, {})
+add parser( Ethernet )
+
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+add metadata(gate_select, 4)
+
+
+# FIELD START
+field_list ip_tuple {
+	ipv4.srcAddr;
+	ipv4.dstAddr;
+}
+
+field_list_calculation flow_calc {
+	input {
+		ip_tuple;
+	}
+	algorithm {
+		crc16;
+	}
+	output_width : 4;
+}
+# FIELD END
+
+/*
+ * Ingress Match/Action Table Part
+ */
+
+action calc_hash() {
+	modify_field_with_hash_based_offset(meta.gate_select, 0, flow_calc, BRANCH_NUM);
+}
+
+table hash_lb {
+	actions { calc_hash; }
+	default_action : calc_hash;
+	size : 0;
+}
+
+apply {
+	apply(hash_lb);
+}
+
+/*
+ * Egress Match/Action Table Part (not finished yet)
+ */
+
+
+/*
+ * P4 Header Deparser Specification Part
+ */
+
+deparser_seq = [UDP, TCP, IPv4, Ethernet]
+add deparser( deparser_seq )
+

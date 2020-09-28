@@ -1,0 +1,36 @@
+############################################################
+# UPDATE_TTL.LIB
+# This module will decrease the ttl field in the IPv4 header by 1.
+#
+############################################################
+
+default_prefix = dummy
+add macro(TYPE_IPV4, 0x0800)
+
+/*
+ * Header Definition Part
+ */
+#define Ethernet
+#define IPv4
+
+/*
+ * P4 Header Parser Specification Part
+ */
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(None, 0, {})
+add parser( Ethernet )
+
+
+# MyIngress
+
+apply {
+}
+
+# MyEgress
+
+/*
+ * P4 Header Deparser Specification Part
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )

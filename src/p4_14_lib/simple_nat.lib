@@ -1,0 +1,170 @@
+############################################################
+#
+# Title: simple_nat.lib
+# This will perform the simple NAT functions.
+#
+# Author: Jane, Jianfeng
+############################################################
+
+default_prefix = nat
+
+add macro(TYPE_NSH, 0x894F)
+add macro(TYPE_IPV4, 0x0800)
+add macro(TYPE_NSH_IPV4, 0x01)
+add macro(TYPE_TCP, 0x06)
+add macro(NAT_TABLE_SIZE, 2000)
+
+
+/*
+ * Header Definition Part (Done)
+ */
+#define Ethernet
+#define IPv4
+#define TCP
+#define UDP
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+add metadata(if_index, 9)
+add metadata(is_ext_if, 1)
+add metadata(nat_table_miss, 1)
+add metadata(ipv4_sa, 32)
+add metadata(ipv4_da, 32)
+add metadata(tcp_sp, 16)
+add metadata(tcp_dp, 16)
+add metadata(if_ipv4_addr, 32)
+add metadata(if_mac_addr, 48)
+
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(protocol, 2, {TYPE_TCP: TCP, TYPE_UDP: UDP})
+set TCP(None, 0, {})
+set UDP(None, 0, {})
+add parser( Ethernet )
+
+
+/*
+ * P4 MyIngress Part
+ */
+
+action drop(){
+	modify_field(meta.drop_flag, 1);
+}
+
+action init_metadata() {   
+}
+
+table init_metadata_apply {
+    actions { init_metadata; }
+    default_action : init_metadata;
+    size : 0;
+}
+
+action set_if_info(ipv4_addr, mac_addr, is_ext ){
+	modify_field(meta.if_ipv4_addr, ipv4_addr);
+	modify_field(meta.if_mac_addr, mac_addr);
+	modify_field(meta.is_ext_if, is_ext);
+}
+
+table interface_info_table {
+	reads { ig_intr_md.ingress_port : exact; }
+	actions {
+		set_if_info;
+		drop;
+	}
+	default_action : drop();
+	size : 10;
+}
+
+action nat_miss_int_to_ext() {
+	modify_field(meta.nat_table_miss, 1);
+    drop();
+}
+
+action nat_miss_ext_to_int() {
+	modify_field(meta.nat_table_miss, 1);
+    drop();
+}
+
+action nat_hit_int_to_ext(srcAddr, srcPort){
+	modify_field(meta.nat_table_miss, 0);
+	modify_field(meta.ipv4_sa, srcAddr);
+    modify_field(meta.ipv4_da, ipv4.dstAddr);
+	modify_field(meta.tcp_sp, srcPort);
+    modify_field(meta.tcp_dp, tcp.dstPort);
+}
+
+action nat_hit_ext_to_int(dstAddr, dstPort){
+	modify_field(meta.nat_table_miss, 0);
+	modify_field(meta.ipv4_sa, ipv4.srcAddr);
+	modify_field(meta.ipv4_da, dstAddr);
+    modify_field(meta.tcp_sp, tcp.srcPort);
+	modify_field(meta.tcp_dp, dstPort);
+}
+
+table nat {
+	reads {
+		meta.is_ext_if: exact;
+		ipv4: valid;
+		tcp: valid;
+		ipv4.srcAddr: ternary;
+		ipv4.dstAddr: ternary;
+		tcp.srcPort: ternary;
+		tcp.dstPort: ternary;
+	}
+	actions {
+		nat_hit_int_to_ext;
+		nat_miss_int_to_ext;
+		nat_hit_ext_to_int;
+		nat_miss_ext_to_int;
+		drop;
+	}
+	default_action : drop;
+	size : NAT_TABLE_SIZE;
+}
+
+action do_rewrites() {
+	set_ip();
+	set_tcp();
+}
+
+table do_rewrites_apply {
+	actions { do_rewrites; }
+	default_action : do_rewrites;
+	size : 0;
+}
+
+action set_ethernet() {
+}
+
+action set_ip() {
+	modify_field(ipv4.srcAddr, meta.ipv4_sa);
+	modify_field(ipv4.dstAddr, meta.ipv4_da);
+}
+
+action set_tcp() {
+	modify_field(tcp.srcPort, meta.tcp_sp);
+	modify_field(tcp.dstPort, meta.tcp_dp);
+}
+
+apply{
+    apply(init_metadata_apply);
+	apply(interface_info_table);
+	apply(nat);
+	if (meta.nat_table_miss == 0){
+		apply(do_rewrites_apply);
+	}
+}
+
+/* Egress */
+
+/* Deparser */
+
+deparser_seq = [UDP, TCP, IPv4, Ethernet]
+add deparser(deparser_seq)
+

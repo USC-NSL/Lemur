@@ -1,0 +1,45 @@
+
+
+default_prefix = update_ttl
+
+add macro(TTL_TABLE_SIZE, 50)
+add_const(TYPE_IPV4, bit<16>, 0x0800)
+
+#define Ethernet
+#define IPv4
+
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(NONE, 0, {})
+add_parser(Ethernet)
+
+#Myingress
+action drop(){
+    mark_to_drop();
+}
+
+action ttl_decrement{
+    hdr.ipv4.ttl = hdr.ipv4.ttl-1;
+}
+
+table ttl_table{
+    actions = {
+        ttl_decrement;
+        drop;
+    }
+    default_action = drop();
+    size = TTL_TABLE_SIZE;
+}
+
+action init_metadata(){}
+
+apply[
+    init_metadata();
+
+    if(hdr.ipv4.isValid()){
+        ttl_table.apply();
+    }
+]
+
+#myEgress
+deparser_seq = [IPv4, Ethernet]
+add_deparser(deparser_seq)

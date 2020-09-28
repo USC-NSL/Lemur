@@ -1,0 +1,173 @@
+############################################################
+#
+# NAT_STAN.LIB
+# This will perform the simple NAT functions.
+#
+# Author: Jianfeng
+############################################################
+
+default_prefix = nat
+
+add macro(INTERFACE_LOOKUP_TABLE_SIZE, 50)
+add macro(NAT_CONN_TABLE_SIZE, 50)
+
+add_const(TYPE_IPV4, bit<16>, 0x0800)
+add_const(TYPE_NSH, bit<16>, 0x894F)
+add_const(TYPE_TCP, bit<8>, 0x06)
+
+/*
+ * Header Definition Part (Done)
+ */
+#define Ethernet
+#define IPv4
+#define TCP
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+add metadata(interface_lookup_table_miss_flag, bit<4>)
+add metadata(nat_conn_table_miss_flag, bit<4>)
+add metadata(is_external, bit<4>)
+
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(protocol, 1, {TYPE_TCP: TCP})
+set TCP(None, 0, {})
+add parser( Ethernet )
+
+
+# MyIngress
+
+action init_metadata() {
+	meta.is_external = 1;
+	meta.interface_lookup_table_miss_flag = 0;
+	meta.nat_conn_table_miss_flag = 0;
+}
+
+action drop() {
+	mark_to_drop();
+}
+
+action interface_lookup_table_hit(bit<4> is_ext) {
+	meta.is_external = is_ext;
+}
+
+action interface_lookup_table_miss() {
+}
+
+table interface_lookup_table {
+	key = {
+		standard_metadata.ingress_port : exact;
+	}
+	actions = {
+		interface_lookup_table_hit;
+		interface_lookup_table_miss;
+	}
+	default_action = interface_lookup_table_miss();
+	size = INTERFACE_LOOKUP_TABLE_SIZE;
+}
+
+action nat_conn_table_hit(ip4Addr_t res_ipv4Addr, tcpPort_t res_tcpPort) {
+	// In the connection table, there is a mapping here.
+	// The switch simply replaces the dstAddr with the current dstAddr.
+	if ( meta.is_external == 1 ) {
+		hdr.ipv4.dstAddr = res_ipv4Addr;
+		hdr.tcp.dstPort = res_tcpPort;
+	}
+	else {
+		hdr.ipv4.srcAddr = res_ipv4Addr;
+		hdr.tcp.srcPort = res_tcpPort;
+	}
+}
+
+action nat_conn_table_miss() {
+}
+
+table nat_conn_table {
+	key = {
+		meta.is_external: exact;
+		hdr.ipv4.srcAddr: exact;
+		hdr.ipv4.dstAddr: exact;
+		hdr.tcp.srcPort: exact;
+		hdr.tcp.dstPort: exact;
+	}
+	actions = {
+		nat_conn_table_hit;
+		nat_conn_table_miss;
+	}
+	default_action = nat_conn_table_miss();
+	size = NAT_CONN_TABLE_SIZE;
+}
+
+apply {
+	init_metadata();
+	
+	if ( hdr.tcp.isValid() ) {
+		// If TCP traffic
+
+		// NAT main functions
+		// First, we should decide the traffic direction (int -> ext) or (ext -> int)
+
+		// check interface_lookup_table
+		switch( interface_lookup_table.apply().action_run ) {
+			interface_lookup_table_hit: {
+				meta.interface_lookup_table_miss_flag = 0;
+			}
+			interface_lookup_table_miss: {
+				meta.interface_lookup_table_miss_flag = 1;
+			}
+		}
+		
+		// Then, for (ext -> int) packets, if no mapping, the packet is sent to CPU and 2 new rules are added to the nat table.
+
+		if ( meta.interface_lookup_table_miss_flag == 0 ) {
+			// interface lookup - successful
+
+			// check nat_conn_table
+			switch( nat_conn_table.apply().action_run ) {
+				nat_conn_table_hit: {
+					meta.nat_conn_table_miss_flag = 0;
+				}
+				nat_conn_table_miss: {
+					meta.nat_conn_table_miss_flag = 1;
+				}
+			}
+
+			if (meta.nat_conn_table_miss_flag == 0) {
+				// Hit
+				// If a mapping is found, the appropriate packet header modifications are executed for the IPv4 and TCP headers.
+				meta.forward_flag = 1;
+			}
+			else {
+				// Miss
+				if (meta.is_external == 1) {
+					// External traffic + miss
+					meta.drop_flag = 1;
+				}
+				else {
+					// Internal traffic + miss
+					meta.controller_flag = 1;
+				}
+			}
+		}
+		else {
+			// interface lookup - unsuccessful
+			meta.drop_flag = 1;
+		}
+	}
+	else{
+		// non TCP traffic
+		meta.drop_flag = 1;
+	}
+}
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+deparser_seq = [TCP, IPV4, Ethernet]
+add deparser( deparser_seq )

@@ -1,0 +1,96 @@
+############################################################
+# ACL.LIB
+# This will perform the basic access control list (ACL) functions.
+# You can match MAC, IP, TCP fields easily.
+# You can also define your own header and implement the corresponding
+# actions to get what you want.
+#
+############################################################
+
+default_prefix = acl
+
+add macro(ACL_IP_TABLE_SIZE, 50)
+add_const(TYPE_IPV4, bit<16>, 0x0800)
+
+/*
+ * Header Definition Part
+ */
+
+#define Ethernet
+#define IPv4
+
+/* Metadata Definition Part
+ *
+ */
+
+add metadata(acl_ip_table_miss_flag, bit<4>)
+
+
+/*
+ * P4 Header Parser Specification Part
+ */
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(None, 0, {})
+add parser( Ethernet )
+
+# MyIngress
+
+action drop() {
+	mark_to_drop();
+}
+
+action acl_ip_table_hit() {
+}
+
+action acl_ip_table_miss() {
+}
+
+table acl_ip_table {
+	key = {
+		hdr.ipv4.srcAddr: exact;
+		hdr.ipv4.dstAddr: exact;
+	}
+	actions = {
+		acl_ip_table_hit;
+		acl_ip_table_miss;
+		NoAction;
+	}
+	default_action = acl_ip_table_miss();
+	size = ACL_IP_TABLE_SIZE;
+}
+
+action init_metadata() {
+	meta.acl_ip_table_miss_flag = (bit<4>)1;
+}
+
+apply {
+	// First, we need to initialize the metadata field
+	init_metadata();
+
+	// Second, modify the packet header fields/metadata fields according to our needs
+	switch( acl_ip_table.apply().action_run ) {
+		acl_ip_table_hit: {
+			meta.acl_ip_table_miss_flag = (bit<4>)0;
+		}
+		acl_ip_table_miss: {
+			meta.acl_ip_table_miss_flag = (bit<4>)1;
+		}
+	}
+
+	if ( (meta.acl_ip_table_miss_flag == 0) ) {
+		meta.drop_flag = 1;
+	}
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )
+
+
+

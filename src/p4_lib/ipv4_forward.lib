@@ -1,0 +1,116 @@
+############################################################
+#
+# IPV4_FORWARD.LIB
+# This will perform the basic IPV4 forwarding functions.
+#
+############################################################
+
+default_prefix = ipv4forward
+
+add macro(IPV4_FORWARD_TABLE_SIZE, 50)
+
+add_const(TYPE_IPV4, bit<16>, 0x0800)
+add_const(TYPE_IPV6, bit<16>, 0x0816)
+add_const(TYPE_TCP, bit<8>, 0x06)
+add_const(TYPE_UDP, bit<8>, 0x11)
+
+
+/*
+ * Header Definition Part (Done)
+ */
+#define Ethernet
+#define IPv4
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+
+add metadata(ipv4_forward_table_miss_flag, bit<4>)
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 2, {TYPE_IPV4:IPv4, TYPE_IPV6:IPv6 })
+set IPv4(protocol, 2, {TYPE_TCP:TCP, TYPE_UDP:UDP})
+set IPv6(None, 0, {})
+set TCP(None, 0, {})
+set UDP(None, 0, {})
+add parser( Ethernet )
+
+# MyIngress
+
+action drop() {
+	mark_to_drop();
+}
+
+action set_dmac(macAddr_t dstAddr) {
+	hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+	hdr.ethernet.dstAddr = dstAddr;
+}
+
+action update_ttl() {
+	hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+}
+
+action ipv4_forward_table_hit(macAddr_t dstAddr, egressSpec_t port) {
+	set_dmac(dstAddr);
+	standard_metadata.egress_spec = port;
+}
+
+action ipv4_forward_table_miss() {
+	
+}
+
+table ipv4_forward_table {
+	key = {
+		hdr.ipv4.dstAddr: lpm;
+	}
+	actions = {
+		ipv4_forward_table_hit;
+		ipv4_forward_table_miss;
+		NoAction;
+	}
+	default_action = ipv4_forward_table_miss();
+	size = IPV4_FORWARD_TABLE_SIZE;
+}
+
+action init_metadata() {
+	meta.ipv4_forward_table_miss_flag = (bit<4>)0;
+}
+
+apply {
+	// First, initialize the metadata field
+	init_metadata();
+
+	// Second, modify packet header fields and metadata fields
+	if (hdr.ipv4.isValid()){
+
+		update_ttl();
+
+		switch( ipv4_forward_table.apply().action_run ) {
+			ipv4_forward_table_hit: {
+				meta.ipv4_forward_table_miss_flag = (bit<4>)0;
+			}
+			ipv4_forward_table_miss: {
+				meta.ipv4_forward_table_miss_flag = (bit<4>)1;
+			}
+		}
+	}
+	
+	// Third, decide the egress_port
+	if (meta.ipv4_forward_table_miss_flag == 1) {
+		meta.drop_flag = 1;
+	}
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )
+

@@ -1,0 +1,75 @@
+############################################################
+# ARP_RESPONDER.LIB
+# This module will respond to ARP request. 
+#
+############################################################
+
+default_prefix = arp_responder
+
+add macro(ETHERTYPE_ARP, 0x0806)
+add macro(OPCODE_REPLY, 2)
+
+/*
+ * Header Definition Part
+ */
+#define Ethernet
+#define ARP
+
+/* Metadata Definition Part
+*
+*/
+add metadata(addrCopy, bit<32>)
+
+/*
+ * P4 Header Parser Specification Part
+ */
+set Ethernet(etherType, 1, {ETHERTYPE_ARP:Arp})
+set Arp(None, 0, {})
+add parser( Ethernet )
+
+
+# MyIngress
+
+action ip_match_mac( macAddr) {
+	modify_field(arp.opcode, OPCODE_REPLY);
+    modify_field(ethernet.dstAddr, ethernet.srcAddr);
+    modify_field(ethernet.srcAddr, macAddr);
+    modify_field(arp.target_hw_addr, arp.sender_hw_addr);
+    modify_field(arp.sender_hw_addr, macAddr);
+    modify_field(meta.addrCopy, arp.target_ip_addr);
+    modify_field(arp.target_ip_addr, arp.sender_ip_addr);
+    modify_field(arp.sender_ip_addr, meta.addrCopy);
+}
+
+action init_metadata() {
+    modify_field(meta.addrCopy, 0);
+}
+
+table arp_respond{
+    reads{
+        arp.opcode: exact;
+        arp.target_ip_addr: exact;
+    }
+    actions{
+        arp_respond;
+        drop;
+    }
+}
+
+apply {
+	init_metadata();
+
+	if (valid(arp)) {
+		apply(arp_respond);
+	}
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )
