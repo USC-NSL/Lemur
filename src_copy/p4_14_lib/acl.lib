@@ -1,0 +1,96 @@
+############################################################
+# ACL.LIB
+# This will perform the basic access control list (ACL) functions.
+# You can match MAC, IP, TCP fields easily.
+# You can also define your own header and implement the corresponding
+# actions to get what you want.
+#
+############################################################
+
+default_prefix = acl
+
+add macro(ACL_TABLE_SIZE, 50)
+add macro(TYPE_IPV4, 0x0800)
+add macro(TYPE_TCP, 0x06)
+add macro(TYPE_UDP, 0x11)
+
+/*
+ * Header Definition Part
+ */
+
+#define Ethernet
+#define IPv4
+#define TCP
+#define UDP
+
+/* Metadata Definition Part
+ *
+ */
+
+add metadata(acl_table_miss_flag, 1)
+
+
+/*
+ * P4 Header Parser Specification Part
+ */
+
+set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
+set IPv4(protocol, 2, {TYPE_TCP:TCP, TYPE_UDP:UDP})
+set TCP(None, 0, {})
+set UDP(None, 0, {})
+add parser( Ethernet )
+
+# MyIngress
+
+action drop() {
+	modify_field(meta.drop_flag, 1);
+}
+
+action acl_table_hit() {
+    modify_field(meta.acl_table_miss_flag, 0);
+}
+
+action acl_table_miss() {
+    modify_field(meta.acl_table_miss_flag, 1);
+    drop();
+}
+
+table acl_table {
+	reads {
+		ipv4.srcAddr: ternary;
+		ipv4.dstAddr: ternary;
+		tcp.srcPort: ternary;
+		tcp.dstPort: ternary;
+	}
+	actions {
+		acl_table_hit;
+		acl_table_miss;
+	}
+	default_action : acl_table_miss();
+	size : ACL_TABLE_SIZE;
+}
+
+action init_metadata() {
+}
+
+table init_metadata_apply {
+	actions { init_metadata; }
+	default_action : init_metadata;
+	size : 0;
+}
+
+apply {
+	apply(init_metadata_apply);
+	apply(acl_table);
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )
+

@@ -1,0 +1,78 @@
+############################################################
+# VLANRM.LIB
+# This will remove vlan header between Ethernet and IP layer.
+# VLAN is used to partition and isolate network at data link layer.
+# Original VLAN header will be discarded.
+# EtherType field of Ethernet header will point to next protocol.
+#
+############################################################
+
+default_prefix = vlan_rm
+
+add macro(ETHERTYPE_IPV4, 0x0800)
+add macro(ETHERTYPE_VLAN, 0x8100)
+
+/*
+ * Header Definition Part
+ */
+
+#define Ethernet
+#define VLAN
+#define IPv4
+
+/* Metadata Definition Part
+ *
+ */
+
+
+/*
+ * P4 Header Parser Specification Part
+ */
+set Ethernet(etherType, 2, {ETHERTYPE_IPV4:IPv4, ETHERTYPE_VLAN: VLAN})
+set VLAN(nextType, 1, {ETHERTYPE_IPV4: IPv4})
+set IPv4(None, 0, {})
+add parser( Ethernet )
+
+# MyIngress
+
+
+action do_VLAN_decap() {
+    modify_field(ethernet.etherType, vlan.nextType);
+    remove_header(vlan);
+}
+
+table rm_vlan {
+	actions {
+		do_VLAN_decap;
+	}
+	default_action : do_VLAN_decap;
+}
+
+action init_metadata() {
+}
+
+table init_metadata_apply {
+    actions { init_metadata; }
+    default_action : init_metadata;
+    size:0;
+}
+
+apply {
+	apply(init_metadata_apply);
+	if(valid(vlan)){
+		apply(rm_vlan);
+	}
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, VLAN, Ethernet]
+add deparser( deparser_seq )
+
+
+

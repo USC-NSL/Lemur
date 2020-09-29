@@ -1,0 +1,66 @@
+############################################################
+#
+# IPV4_FORWARD.LIB
+# This will perform the basic IPV4 forwarding functions.
+#
+############################################################
+
+default_prefix = drop
+
+add macro(TYPE_IPV4, 0x0800)
+
+/*
+ * Header Definition Part (Done)
+ */
+
+#define Ethernet
+#define IPv4
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 1, { TYPE_IPV4:IPv4 })
+set IPv4(None, 0, {})
+add parser( Ethernet )
+
+# MyIngress
+
+action init_metadata() {
+}
+
+table init_metadata_apply {
+    actions { init_metadata; }
+    default_action : init_metadata;
+    size:0;
+}
+
+action main() {
+    modify_field(meta.drop_flag, 1);
+}
+
+table main_apply {
+    actions { main; }
+    default_action : main;
+    size : 0;
+}
+
+apply {
+	apply(init_metadata_apply);
+	apply(main_apply);
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )

@@ -1,0 +1,100 @@
+############################################################
+#
+# IPV4_FORWARD.LIB
+# This will perform the basic IPV4 forwarding functions.
+#
+############################################################
+
+default_prefix = ipv4forward
+
+add macro(IPV4_FORWARD_TABLE_SIZE, 5000)
+add macro(TYPE_IPV4, 0x0800)
+add macro(TYPE_IPV6, 0x0816)
+add macro(TYPE_TCP, 0x06)
+add macro(TYPE_UDP, 0x11)
+
+/*
+ * Header Definition Part (Done)
+ */
+
+#define Ethernet
+#define IPv4
+
+/*
+ * Metadata Definition Part (not finished yet)
+ */
+
+add metadata(ipv4_forward_table_miss_flag, 4)
+
+/*
+ * P4 Header Parser Specification Part (Done)
+ */
+
+set Ethernet(etherType, 1, { TYPE_IPV4:IPv4 })
+set IPv4(None, 0, {})
+add parser( Ethernet )
+
+# MyIngress
+
+action set_dmac(dstAddr) {
+	modify_field(ethernet.srcAddr, ethernet.dstAddr);
+	modify_field(ethernet.dstAddr, dstAddr);
+}
+
+action ipv4_forward_table_hit(dstAddr, port) {
+	set_dmac(dstAddr);
+	modify_field(ig_intr_md_for_tm.ucast_egress_port, port);
+	modify_field(meta.ipv4_forward_table_miss_flag, 0);
+}
+
+action ipv4_forward_table_miss() {
+    modify_field(meta.ipv4_forward_table_miss_flag, 1);
+}
+
+table ipv4_forward_table {
+	reads {
+		ipv4.dstAddr: lpm;
+	}
+	actions {
+		ipv4_forward_table_hit;
+		ipv4_forward_table_miss;
+	}
+	default_action : ipv4_forward_table_miss;
+	size : IPV4_FORWARD_TABLE_SIZE;
+}
+
+action init_metadata() {
+	modify_field(meta.ipv4_forward_table_miss_flag, 0);
+}
+
+table init_metadata_apply {
+    actions { init_metadata; }
+    default_action : init_metadata;
+    size:0;
+}
+
+action drop_pkt() {
+    modify_field(meta.drop_flag, 1);
+}
+
+table drop_pkt_apply {
+    actions { drop_pkt; }
+    default_action : drop_pkt;
+    size : 0;
+}
+
+apply {
+	apply(init_metadata_apply);
+	apply(ipv4_forward_table);
+}
+
+# MyEgress
+
+
+/*
+ * P4 Header Deparser Specification Part (Done)
+ */
+
+deparser_seq = [IPv4, Ethernet]
+add deparser( deparser_seq )
+
