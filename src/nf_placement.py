@@ -13,6 +13,7 @@ import json
 import time
 import ast
 import random
+import sys
 import numpy as np
 from ast import literal_eval as make_tuple
 from user_level_parser.UDLemurUserListener \
@@ -63,7 +64,7 @@ def read_para():
         fp = open('module_data.txt', 'r')
     except:
         print("module_data.txt is not provided. Fatal error!")
-        raise error
+        sys.exit()
 
     for line in fp:
         information = line.split()
@@ -425,7 +426,7 @@ def tag_core(dup_list, dup_tuple):
             module.core_num = 1+dup_tuple[i]
             if module.core_num <1:
                 print "Core assignment error"
-                raise error
+                sys.exit()
     return dup_list
 
 def tag_chain_index(module_list):
@@ -594,7 +595,7 @@ def inequal_form(sub_list, total_chain_num, para_list):
         core_num = module.core_num
         if module.core_num <1:
             print "warning", module.nf_class
-            raise error
+            sys.exit()
         str_list.append("%d%d" % (module.service_path_id, module.service_id))
         if module.core_index not in right_index_dict:
             right_index_dict[module.core_index] = 0
@@ -985,12 +986,16 @@ def optimize_pick(all_pattern_dict):
 
     """
     all_pattern_dict_order = sorted(all_pattern_dict, key=itemgetter(-1), reverse=True)
-    chosen_pattern = all_pattern_dict_order[0][0]
-    module_info = all_pattern_dict_order[0][1]
-    expected_throughput = all_pattern_dict_order[0][-1]
-    write_out_pattern_file(all_pattern_dict_order, chosen_pattern)
-
+    try:
+        chosen_pattern = all_pattern_dict_order[0][0]
+        module_info = all_pattern_dict_order[0][1]
+        expected_throughput = all_pattern_dict_order[0][-1]
+        write_out_pattern_file(all_pattern_dict_order, chosen_pattern)
+    except:
+        print("No available placement for this SLO\n")
+        sys.exit()
     return chosen_pattern, module_info, expected_throughput
+
 
 def apply_pattern(module_list, chosen_pattern, module_info, bess_para):
     """ Apply chosen placement option 'chosen_pattern' to
@@ -1008,7 +1013,7 @@ def apply_pattern(module_list, chosen_pattern, module_info, bess_para):
     """
     if chosen_pattern <0:
         print("no available assignment")
-        raise error
+        sys.exit()
     total_len = len(module_list)
     for i in range(len(module_list)):
         mod_bit = (chosen_pattern>>(total_len-i-1))%2
@@ -1133,10 +1138,16 @@ def no_profile_optimize_pick(pattern_list, module_list, bess_para, constraints):
                                                  module_list, \
                                                  bess_para, \
                                                  constraints)
-    chosen_pattern, module_info, _ = optimize_pick(all_chain_pattern_dict)
+    try:
+        chosen_pattern, module_info, _ = optimize_pick(all_chain_pattern_dict)
+    except:
+        print("No placement satisfying SLO")
+        sys.exit()
+
+    
+    return chosen_pattern, module_info
 
         
-    return chosen_pattern, module_info
 
 def individual_optimize_pick(module_list, bess_para, constraints):
     """ Run Greedy algortihm and select deployment placement

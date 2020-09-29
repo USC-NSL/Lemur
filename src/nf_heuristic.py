@@ -34,11 +34,6 @@ last_index = -1
 global option_set
 option_set = []
 
-def examine_prev(module_list):
-    for i in range(len(module_list)-1):
-        print("module %s: its previous is " % module_list[i+1].nf_class)
-        for prev in module_list[i+1].prev_nodes:
-            print("%s "% prev.nf_class)
 
 def parse_all_node(nfcp_parser):
     nf_graph = convert_global_nf_graph(nfcp_parser.scanner)
@@ -49,18 +44,15 @@ def parse_all_node(nfcp_parser):
 def init_allp4(module_list):
     index = 0
     global last_index, option_set
-#    print("last_index: %s" % last_index)
     para_list,_ = placeTool.read_para()
     for module in module_list:
         if module.nf_type == 2:
             module.nf_type = 0
-#            option_set.append(index)
             option_nf.append([module.weight*int(para_list.get(str(module.nf_class))),index])
         index = index+1
     option_nf.sort(key = lambda l: l[0])
     option_set = list(option_nf)
     
-#    print(option_nf)
     return module_list
 
 def run_p4_compiler(p4_filename):
@@ -71,7 +63,6 @@ def generate_code(conf_parser, module_list, p4_filename, p4_version):
     output_fp = open(p4_filename, 'w')
     output_fp.write("\n")
     p4_node_lists = conf_parser.conf_parser_get_global_p4_nodes(copy.deepcopy(module_list))
-#    log_module(module_list)
     default_nsh_node = nf_node()
     default_nsh_node.setup_node_from_argument('sys_default', 'SYS', 0, 0)
     p4_node_lists.insert(0, [default_nsh_node])
@@ -138,10 +129,7 @@ def next_placement_to_offload_p4(module_list):
 def highest_core_allocation_derived_from_LP(module_list):
     find_solution = False
     chosen_module_list = copy.deepcopy(module_list)
-#    print("Length of chosen_module_list: %d" % len(chosen_module_list))
     throughput_list, bess_dict_para = placeTool.heuristic_core_allocation(module_list)
-#    print("throughput list")
-#    print(throughput_list)
     
     if len(throughput_list)>0:
         find_solution = True
@@ -149,7 +137,6 @@ def highest_core_allocation_derived_from_LP(module_list):
         chosen_module_list = placeTool.apply_pattern(module_list, chosen_pattern, core_alloc, bess_dict_para)
     else:
         find_solution = False
-#        chosen_module_list = module_list
         expected_throughput = 0
     return find_solution, chosen_module_list, expected_throughput
 
@@ -180,7 +167,6 @@ def can_offload(pair, chain, g):
     end_node_queue_1 = []
     end_node_queue_2 = []
     for node in subgroup_1:
-#        print("node in group1: %s" % node.nf_class)
         add_to_queue = False
         if len(node.adj_nodes)>0:
             for child in node.adj_nodes:
@@ -190,6 +176,7 @@ def can_offload(pair, chain, g):
                 end_node_queue_1.append(chain.index(node))
         else:
             print("SOMETHING IS WRONG HERE!")
+            raise error
 
     for lead_node in subgroup_2:
 #        print("node in group2: %s" % lead_node.nf_class)
