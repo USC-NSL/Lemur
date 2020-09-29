@@ -19,7 +19,7 @@ import collections
 from antlr4 import *
 from LemurUserParser import LemurUserParser
 from LemurUserListener import LemurUserListener
-from util.nfcp_nf_node import nf_chain_graph, nf_node
+from util.lemur_nf_node import nf_chain_graph, nf_node
 
 # The global SPI and SI values
 global spi_val, si_val

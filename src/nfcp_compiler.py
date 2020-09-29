@@ -32,7 +32,7 @@ import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
 import new_bess_generator as BG
 import time
-from util.nfcp_nf_node import *
+from util.lemur_nf_node import *
 from util.nfcp_install_table_entry import NFCP_entry_helper
 from core.profile_p4 import p4_usage_checker
 import nf_placement as placeTool

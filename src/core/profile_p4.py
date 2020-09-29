@@ -21,7 +21,7 @@ import connect as Conn
 import p4_lib_parser.header as header
 import p4_lib_parser.header_lib as header_lib
 import util.lang_parser_helper as lang_helper
-from util.nfcp_nf_node import nf_chain_graph, nf_node
+from util.lemur_nf_node import nf_chain_graph, nf_node
 
 global tcam_usage_dict, sram_usage_dict
 global TCAM_BLOCK_WIDTH, TCAM_BLOCK_DEPTH

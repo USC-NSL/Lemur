@@ -21,7 +21,7 @@ import p4_lib_parser.ingress_match_action as MyIngress
 import p4_lib_parser.egress_match_action as MyEgress
 import p4_lib_parser.my_deparser as MyDeparser
 import util.lang_parser_helper as lang_helper
-from util.nfcp_nf_node import *
+from util.lemur_nf_node import *
 
 
 '''

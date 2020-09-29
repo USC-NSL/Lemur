@@ -30,7 +30,7 @@ import os
 import subprocess
 import collections
 import util.lang_parser_helper as lang_helper
-from util.nfcp_nf_node import *
+from util.lemur_nf_node import *
 
 '''
 <NFCP script language>

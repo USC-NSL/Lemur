@@ -16,7 +16,7 @@ import os
 import subprocess
 import collections
 import copy
-from util.nfcp_nf_node import *
+from util.lemur_nf_node import *
 from util.lang_parser_helper import *
 from antlr4 import *
 from user_level_parser.LemurUserLexer import LemurUserLexer

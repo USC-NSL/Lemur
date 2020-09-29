@@ -32,8 +32,8 @@ import p4_lib_parser.v1_switch_main as MySwitchMain
 from user_level_parser.UDLemurUserListener \
     import convert_nf_graph, convert_global_nf_graph
 from util.lang_parser_helper import *
-from util.nfcp_nf_node import *
-from util.nfcp_utils import *
+from util.lemur_nf_node import *
+from util.lemur_codegen_helper import *
 
 # P4 constant string literals
 p414_egress_start = '\n/************************  E G R E S S  **********************************/\n'
