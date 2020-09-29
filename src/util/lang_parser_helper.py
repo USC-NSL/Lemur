@@ -1,16 +1,7 @@
 """
-* Title: lang_parser_helper.py
-* Description:
-* This library contains useful functions for parsing. It is based on regular 
-* expression to scan, match, and parse key words in a piece of text.
-*
-* Author: Jianfeng Wang
-* Time: 04/06/2018
-* Email: jianfenw@usc.edu
-*
-* Author: Jane Yen
-* Time: 04/06/2018
-* Email: yeny@usc.edu
+* This library includes helper functions for parsing user-level config
+* files. Helper functions use regular expressions to scan, match, and
+* parse key words in a piece of text.
 *
 """
 
@@ -18,7 +9,7 @@ import re
 
 # General Lang Parser Helper
 def convert_str_to_list(gen_line):
-	"""
+	""" Convert a list (in str) to a real Python list.
 	This function will convert a list written in string into a real python list
 	e.g. "[a, b, c]" -> ['a', 'b', 'c']
 	"""
@@ -36,6 +27,8 @@ def convert_str_to_list(gen_line):
 
 
 # User-level Lang Parser Helper
+# Two lookup tables that converts key words used in an user-level config
+# file to corresponding key words in the final P4 code.
 global built_in_flowspec_lookup_table
 global built_in_flowspec_lookup_table_p414
 built_in_flowspec_lookup_table = { \
@@ -53,8 +46,8 @@ built_in_flowspec_lookup_table_p414 = { \
 
 
 def match_stage_result(user_line):
-	"""
-	This function is used to parse 'pipeline ingress requires at least 6 stages'
+	""" Parses switch stage usage.
+	This function parses 'pipeline ingress requires at least (?) stages'
 	"""
 	parse_result = re.match(r"pipeline ingress requires at least (.*) stages", user_line, re.M|re.I)
 	return parse_result
@@ -82,7 +75,6 @@ def user_parser_traffic_type_old(user_line):
 		return ('ALL_Traffic', [] )
 	return res
 
-
 def user_parser_traffic_type(user_line):
 	"""
 	Input: '{(a,b,c), (d,e,f)}'
@@ -103,24 +95,19 @@ def user_parser_nickname(user_line):
 	parse_result = re.match(r"\[\{(.*):(.*)\}\]", user_line, re.M|re.I)
 	return parse_result.group(1).split(''), parse_result.group(2).split('')
 
-
 def user_parser_nf_chain(user_line):
 	"""
-	This function is used to parse "traffic: nf_chain"
+	This function parses "traffic: nf_chain".
 	"""
 	line = user_line.strip()
 	parse_result = re.match(r"(.*):(.*)", line, re.M|re.I)
 	return parse_result.group(1).strip(), parse_result.group(2).strip()
 
 
-# Developer-level Lang Parser Helper
-# In the P4 library level, the compiler have to parse different tags for each library
-# Here, most functions are written for these tags.
-
+# Developer-level P4 library Parser Helper functions
+# For P4 libraries, Lemur's compiler needs to parse different tags for
+# each library, such as marco, header, parser, and apply.
 def lib_parser_default_prefix(user_line):
-	"""
-	This function is used to parse "default_prefix = 'xxx'
-	"""
 	parse_result = re.match(r"default_prefix(.*)=(.*)", user_line, re.M|re.I)
 	return parse_result
 
@@ -129,12 +116,9 @@ def lib_parser_macro(user_line):
 	return parse_result
 
 def lib_parser_header(user_line):
-	# header
 	return
 
-
 def lib_parser_parser(user_line):
-	# parser
 	return
 
 def lib_parser_field_list_start(user_line):
@@ -147,9 +131,7 @@ def lib_parser_field_list_calc_start(user_line):
 	parse_result = re.match(r"^field_list_calculation (.*){", line, re.M|re.I)
 	return parse_result
 
-
 def lib_parser_ingress_apply_start(user_line):
-	# ingress
 	line = user_line.strip()
 	parse_result = re.match(r"^apply(.*){", line, re.M|re.I)
 	return parse_result
@@ -161,7 +143,6 @@ def lib_parser_ingress_apply_call_table(user_line, lang_version):
 	elif lang_version == 'p416': # table_name.apply();
 		parse_result = re.match(r"^(.*).apply\(\)([' ']*);", line, re.M|re.I)
 	return parse_result
-
 
 def lib_parser_ingress_table_start(user_line):
 	line = user_line.strip()
@@ -199,7 +180,6 @@ def lib_parser_ingress_table_default_action_start(user_line, lang_version):
 		parse_result = re.match(r"^default_action(.*)=(.*);", line, re.M|re.I)
 	return parse_result
 
-
 def lib_parser_ingress_action_start(user_line):
 	line = user_line.strip()
 	parse_result = re.match(r"^action (.*)\((.*)\)(.*){", line, re.M|re.I)
@@ -213,34 +193,9 @@ def lib_parser_ingress_action_call_action(user_line, lang_version):
 		parse_result = re.match(r"^(.*)\((.*)\)(.*);", line, re.M|re.I)
 	return parse_result
 
-
 def lib_parser_egress(user_line):
-	# egress
 	return
 
 def lib_parser_deparser(user_line):
 	return
-
-
-def lang_parser_tester_main():
-	filename = "./example_two_sp.conf"
-
-	# Test general parsing functions
-
-	# 1. convert_str_to_list
-	print convert_str_to_list("[a, b, c]")
-	
-	# Test user_parser
-	# Test lib_parser
-
-	# 1. header
-	# 2. parser
-	# 3. ingress
-	# 4. egress
-	# 5. deparser
-	return
-
-if __name__ == "__main__":
-	lang_parser_tester_main()
-
 

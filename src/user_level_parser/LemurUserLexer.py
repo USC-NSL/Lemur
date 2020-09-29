@@ -1,4 +1,5 @@
-# Generated from NFCPUser.g4 by ANTLR 4.7.1
+# ANTRL generated file (EDIT IF YOU KNOW WHAT YOU ARE DOING)
+# Generated from LemurUser.g4 by ANTLR 4.7.1
 # encoding: utf-8
 from __future__ import print_function
 from antlr4 import *
@@ -98,7 +99,7 @@ def serializedATN():
         return buf.getvalue()
 
 
-class NFCPUserLexer(Lexer):
+class LemurUserLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -145,10 +146,10 @@ class NFCPUserLexer(Lexer):
                   u"NEWLINE", u"LOWERCASE", u"UPPERCASE", u"DIGIT", u"INT", 
                   u"FLOAT", u"STRING", u"WILDCARD", u"BOOL", u"VARIABLENAME" ]
 
-    grammarFileName = u"NFCPUser.g4"
+    grammarFileName = u"LemurUser.g4"
 
     def __init__(self, input=None, output=sys.stdout):
-        super(NFCPUserLexer, self).__init__(input, output=output)
+        super(LemurUserLexer, self).__init__(input, output=output)
         self.checkVersion("4.7.1")
         self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
         self._actions = None

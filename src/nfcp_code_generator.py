@@ -29,7 +29,7 @@ import p4_lib_parser.my_deparser as MyDeparser
 import p4_lib_parser.my_verifychecksum as MyVerifyChecksum
 import p4_lib_parser.my_computechecksum as MyComCheckSum
 import p4_lib_parser.v1_switch_main as MySwitchMain
-from user_level_parser.UDNFCPUserListener \
+from user_level_parser.UDLemurUserListener \
     import convert_nf_graph, convert_global_nf_graph
 from util.lang_parser_helper import *
 from util.nfcp_nf_node import *

@@ -1,13 +1,12 @@
 """
-* 
-* Title: UDNFCPUserListener.py
-* Description:
-* This function contains the user-defined parser class. The class contains all 
-* necessary functions, which would be triggered when traversing the AST.
-* 
-* Author: Jianfeng Wang
-* Time: 06/10/2018
-* Email: jianfenw@usc.edu
+*
+* This is Lemur's user-defined parser class.
+* After Lemur parses the user-defined NF chains, results are stored
+* as an user-defined parser class object as a Abstract Syntax Tree (AST).
+* The (AST) object contains all necessary data and provides methods to
+* traverse the AST.
+* The class also provides additional functions that convert the AST into
+* an NF DAG, which can be used by Lemur compiler.
 *
 """
 
@@ -18,8 +17,8 @@ import subprocess
 import copy
 import collections
 from antlr4 import *
-from NFCPUserParser import NFCPUserParser
-from NFCPUserListener import NFCPUserListener
+from LemurUserParser import LemurUserParser
+from LemurUserListener import LemurUserListener
 from util.nfcp_nf_node import nf_chain_graph, nf_node
 
 # The global SPI and SI values
@@ -42,8 +41,9 @@ def print_ts():
 
 def convert_global_nf_graph(scanner):
     """
-    Convert all ll_nodes into a nf_node graph. The graph may have multiple head nodes and multiple tail nodes.
-    :type scanner: UDNFCPUserListener
+    Convert all ll_nodes into a nf_node graph. The graph may have multiple
+    head nodes and tail nodes.
+    :type scanner: UDLemurUserListener
     :rtype res_graph: nf_chain_graph
     """
     global ts
@@ -70,13 +70,16 @@ def convert_global_nf_graph(scanner):
     return res_graph
 
 def convert_nf_graph(ll_node):
-    """ Description: This function converts a ll_node graph into a nf_node graph (a complete graph).
-    (For the convenience of further processing, we use a special definition of NF nodes, i.e. nf_node, instead of ll_node)
+    """
+    This function converts a ll_node graph into a nf_node graph. This is
+    used for a single NF chain. To consider multiple NF chains, please
+    refer to the above function, i.e. convert_global_nf_graph.
+    ll_node is an abstract representation of NF. After this function, all
+    ll_nodes are converted to nf_nodes.
     :type ll_node: linkedlist_node
     :rtype res_graph: nf_chain_graph
     """
     global ts
-    # print('ll_node:%s' %(str(ll_node)), ll_node.transition_condition)
     res_graph = nf_chain_graph(ll_node.transition_condition)
 
     # the elem to iterate through the linked list
@@ -159,8 +162,10 @@ class linkedlist_node(object):
         self.next = None
 
     def set_node_instance(self, node_instance, scanner):
-        """Description: This function will post-process every 'branch' node.
-        It shall set up the 'self.branch' to show the node's all branches.
+        """
+        This function post-process every 'branch' node.
+        It sets up the branch list, i.e. 'self.branch' to indicate whether
+        the node has any branches.
         :type node_instance: linkedlist_node
         :type scanner: nfcp_config_parser
         """
@@ -189,7 +194,6 @@ class linkedlist_node(object):
 
     def set_transition_condition(self, nlist_instance):
         """
-        Description:
         This function sets up the transition_condition field for the ll_node.
         Please note there are two places where you have to call this function.
         (1) configure a NF chain: 'flowspec : nfchain'
@@ -205,8 +209,8 @@ class linkedlist_node(object):
 
     def __len__(self):
         """
-        This function shall return the maximum length of the WHOLE NF chain
-        that starts from the current node.
+        This function returns the max length of one NF DAG that starts
+        from the current node, i.e. |this|.
         """
         len_count = 0
         curr_node = self
@@ -216,8 +220,10 @@ class linkedlist_node(object):
         return len_count
 
     def postprocess_branches(self, scanner):
-        """ Description: 'unwrap' all branch nodes. 
-        Note: scanner.struct_nlinkedlist_dict stores all NF-chain instances. Each NF chain is indexed by the instance's name.
+        """
+        This function unwraps all branch nodes.
+        Note: scanner.struct_nlinkedlist_dict stores all NF-chain instances.
+        Each NF chain is indexed by the instance's name.
         :type scanner: nfcp_config_parser 
         """
         if isinstance(self.instance, list): # branch node
@@ -260,10 +266,11 @@ class linkedlist_node(object):
 
     def get_nf_node(self):
         """
-        This function will return a list. It can convert the linkedlist, starting
-        from the self node. 
-        Note: the graph struct comes from the 'branch' nodes. Otherwise, the result 
-        list only contains one node.
+        This function converts a linkedlist (starting from |this| ll_node)
+        to a normal list. Consecutive NFs in a run-to-completion format
+        are merged together as one final NF node.
+        Note that an NF DAG is a true DAG if it contains 'branch' nodes.
+        Otherwise, the final list should only contain one nf_node.
         """
         res_node_list = []
         if len(self.branch) == 0:
@@ -375,12 +382,6 @@ class linkedlist_node(object):
                 raise
 
     def __str__(self):
-        """
-         __str__:
-        The simple printer function. Note: the function does NOT print the details
-        for the 'branch' node.
-        To use this function, write 'self.__str__()' or 'print self'.
-        """
         res_str = ""
         if len(self.branch) != 0:
             res_str += 'NF Branch[spi=%d]' %(self.spi)
@@ -417,8 +418,9 @@ class linkedlist_node(object):
 
     def update_service_index_nextfunc(self):
         """
-        update_service_index_nextfunc:
-        It should update si_val by 1. Also, it sets up the self.spi and self.si
+        This function sets (spi, si) index for an NF in the same
+        run-to-completion chain. It increases si_val by 1, and then sets
+        self.spi and self.si.
         """
         global spi_val, si_val
         si_val += 1
@@ -428,8 +430,8 @@ class linkedlist_node(object):
         
     def update_service_index_nextchain(self):
         """
-        update_service_index_nextchain:
-        It should restart spi_val and si_val for a new chain.
+        This function resets (spi_val, si_val) index for a new
+        run-to-completion chain.
         """
         global spi_val, si_val
         spi_val += 1
@@ -437,7 +439,9 @@ class linkedlist_node(object):
         return
 
 
-class UDNFCPUserListener(NFCPUserListener):
+# This class stores all information after Lemur's user-level parser
+# processes the NF-chain config file.
+class UDLemurUserListener(LemurUserListener):
     def __init__(self):
         # Lookup Table for basic data types
         self.var_int_dict = {}
@@ -459,26 +463,26 @@ class UDNFCPUserListener(NFCPUserListener):
         self.line_count = 0
         return
 
-    # Enter a parse tree produced by NFCPUserParser#total.
+    # Enter a parse tree produced by LemurUserParser#total.
     def enterTotal(self, ctx):
-        #print("NFCP AST Walker starts:")
+        #print("Lemur AST Walker starts:")
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#total.
+    # Exit a parse tree produced by LemurUserParser#total.
     def exitTotal(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#line.
+    # Enter a parse tree produced by LemurUserParser#line.
     def enterLine(self, ctx):
         self.line_count += 1
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#line.
+    # Exit a parse tree produced by LemurUserParser#line.
     def exitLine(self, ctx):
         pass
 
-    # Enter a parse tree produced by NFCPUserParser#define_int.
+    # Enter a parse tree produced by LemurUserParser#define_int.
     def enterDefine_int(self, ctx):
         #print(ctx.VARIABLENAME(), ctx.INT(), type(str(ctx.INT())))
         var_name = str(ctx.VARIABLENAME())
@@ -486,12 +490,12 @@ class UDNFCPUserListener(NFCPUserListener):
         self.var_int_dict[var_name] = var_value
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_int.
+    # Exit a parse tree produced by LemurUserParser#define_int.
     def exitDefine_int(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#define_float.
+    # Enter a parse tree produced by LemurUserParser#define_float.
     def enterDefine_float(self, ctx):
         #print(ctx.VARIABLENAME(), ctx.FLOAT(), type(str(ctx.FLfOAT())))
         var_name = str(ctx.VARIABLENAME())
@@ -499,7 +503,7 @@ class UDNFCPUserListener(NFCPUserListener):
         self.var_float_dict[var_name] = var_value
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_float.
+    # Exit a parse tree produced by LemurUserParser#define_float.
     def exitDefine_float(self, ctx):
         pass
 
@@ -510,14 +514,14 @@ class UDNFCPUserListener(NFCPUserListener):
             res = str(ctx.STRING(idx))[1:-1]
         return res
 
-    # Enter a parse tree produced by NFCPUserParser#define_string.
+    # Enter a parse tree produced by LemurUserParser#define_string.
     def enterDefine_string(self, ctx):
         var_name = str(ctx.VARIABLENAME())
         var_value = self.get_string_from_ctx(ctx)
         self.var_string_dict[var_name] = var_value
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_string.
+    # Exit a parse tree produced by LemurUserParser#define_string.
     def exitDefine_string(self, ctx):
         pass
 
@@ -530,14 +534,14 @@ class UDNFCPUserListener(NFCPUserListener):
             res = True
         return res
 
-    # Enter a parse tree produced by NFCPUserParser#define_bool.
+    # Enter a parse tree produced by LemurUserParser#define_bool.
     def enterDefine_bool(self, ctx):
         var_name = str(ctx.VARIABLENAME())
         var_value = self.get_bool_from_ctx(ctx)
         self.var_bool_dict[var_name] = var_value
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_bool.
+    # Exit a parse tree produced by LemurUserParser#define_bool.
     def exitDefine_bool(self, ctx):
         pass
 
@@ -555,7 +559,7 @@ class UDNFCPUserListener(NFCPUserListener):
         res = (nf_name, nf_arg)
         return res
 
-    # Enter a parse tree produced by NFCPUserParser#define_nfinstance.
+    # Enter a parse tree produced by LemurUserParser#define_nfinstance.
     def enterDefine_nfinstance(self, ctx):
         # Note: each NF instance can be either a BESS or P4 module
         #print("Enter Define NetFunc")
@@ -564,7 +568,7 @@ class UDNFCPUserListener(NFCPUserListener):
         self.func_dict[var_name] = var_value
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_nfinstance.
+    # Exit a parse tree produced by LemurUserParser#define_nfinstance.
     def exitDefine_nfinstance(self, ctx):
         pass
 
@@ -599,7 +603,7 @@ class UDNFCPUserListener(NFCPUserListener):
                 res_nlist.append(var_value)
         return res_nlist
 
-    # Enter a parse tree produced by NFCPUserParser#define_nlist.
+    # Enter a parse tree produced by LemurUserParser#define_nlist.
     def enterDefine_nlist(self, ctx):
         var_name = str(ctx.VARIABLENAME())
         nlist_obj = ctx.nlist()
@@ -607,7 +611,7 @@ class UDNFCPUserListener(NFCPUserListener):
         self.struct_nlist_dict[var_name] = nlist
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_nlist.
+    # Exit a parse tree produced by LemurUserParser#define_nlist.
     def exitDefine_nlist(self, ctx):
         pass
 
@@ -649,7 +653,7 @@ class UDNFCPUserListener(NFCPUserListener):
             res_ntuple[var_name] = var_value
         return res_ntuple
 
-    # Enter a parse tree produced by NFCPUserParser#define_ntuple.
+    # Enter a parse tree produced by LemurUserParser#define_ntuple.
     def enterDefine_ntuple(self, ctx):
         #print("Enter Define Tuple")
         var_name = str(ctx.VARIABLENAME())
@@ -658,7 +662,7 @@ class UDNFCPUserListener(NFCPUserListener):
         self.struct_ntuple_dict[var_name] = ntuple
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#define_ntuple.
+    # Exit a parse tree produced by LemurUserParser#define_ntuple.
     def exitDefine_ntuple(self, ctx):
         pass
 
@@ -702,7 +706,7 @@ class UDNFCPUserListener(NFCPUserListener):
             curr_ll_node = new_ll_node
         return root_ll_node
 
-    # Enter a parse tree produced by NFCPUserParser#define_nlinkedlist.
+    # Enter a parse tree produced by LemurUserParser#define_nlinkedlist.
     def enterDefine_nlinkedlist(self, ctx):
         """
         Enter a new NF chain definition (a nlinkedlist)
@@ -717,11 +721,11 @@ class UDNFCPUserListener(NFCPUserListener):
         self.struct_nlinkedlist_dict[var_name] = nlinkedlist
         return
 
-    # Exit a parse tree produced by NFCPUserParser#define_nlinkedlist.
+    # Exit a parse tree produced by LemurUserParser#define_nlinkedlist.
     def exitDefine_nlinkedlist(self, ctx):
         pass
 
-    # Enter a parse tree produced by NFCPUserParser#define_flowspec.
+    # Enter a parse tree produced by LemurUserParser#define_flowspec.
     def enterDefine_flowspec(self, ctx):
         var_name = str(ctx.VARIABLENAME())
         flowspec_obj = ctx.flowspec()
@@ -730,12 +734,12 @@ class UDNFCPUserListener(NFCPUserListener):
         self.struct_nlist_dict[var_name] = nlist
         return
 
-    # Exit a parse tree produced by NFCPUserParser#define_flowspec.
+    # Exit a parse tree produced by LemurUserParser#define_flowspec.
     def exitDefine_flowspec(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#define_nfchain.
+    # Enter a parse tree produced by LemurUserParser#define_nfchain.
     def enterDefine_nfchain(self, ctx):
         var_name = str(ctx.VARIABLENAME())
         #print("Enter Define nfchain %s" %(var_name))
@@ -746,12 +750,12 @@ class UDNFCPUserListener(NFCPUserListener):
         self.struct_nlinkedlist_dict[var_name] = nlinkedlist
         return
 
-    # Exit a parse tree produced by NFCPUserParser#define_nfchain.
+    # Exit a parse tree produced by LemurUserParser#define_nfchain.
     def exitDefine_nfchain(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#configue_nfchain.
+    # Enter a parse tree produced by LemurUserParser#configue_nfchain.
     def enterConfig_nfchain(self, ctx):
         # When a NF chain is configured with a flowspec, we then consider
         # the placement of the NF chain (starting by assigning SPI and SI
@@ -771,88 +775,88 @@ class UDNFCPUserListener(NFCPUserListener):
         #print("Configure chain[%s]: %s" %(nfchain, str(nfchain_instance)))
         return
 
-    # Exit a parse tree produced by NFCPUserParser#configue_nfchain.
+    # Exit a parse tree produced by LemurUserParser#configue_nfchain.
     def exitConfig_nfchain(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#flowspec.
+    # Enter a parse tree produced by LemurUserParser#flowspec.
     def enterFlowspec(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#flowspec.
+    # Exit a parse tree produced by LemurUserParser#flowspec.
     def exitFlowspec(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#netfunction_chain.
+    # Enter a parse tree produced by LemurUserParser#netfunction_chain.
     def enterNetfunction_chain(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#netfunction_chain.
+    # Exit a parse tree produced by LemurUserParser#netfunction_chain.
     def exitNetfunction_chain(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#netfunction.
+    # Enter a parse tree produced by LemurUserParser#netfunction.
     def enterNetfunction(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#netfunction.
+    # Exit a parse tree produced by LemurUserParser#netfunction.
     def exitNetfunction(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#nlist.
+    # Enter a parse tree produced by LemurUserParser#nlist.
     def enterNlist(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#nlist.
+    # Exit a parse tree produced by LemurUserParser#nlist.
     def exitNlist(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#nlist_elem.
+    # Enter a parse tree produced by LemurUserParser#nlist_elem.
     def enterNlist_elem(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#nlist_elem.
+    # Exit a parse tree produced by LemurUserParser#nlist_elem.
     def exitNlist_elem(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#ntuple.
+    # Enter a parse tree produced by LemurUserParser#ntuple.
     def enterNtuple(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#ntuple.
+    # Exit a parse tree produced by LemurUserParser#ntuple.
     def exitNtuple(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#ntuple_elem.
+    # Enter a parse tree produced by LemurUserParser#ntuple_elem.
     def enterNtuple_elem(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#ntuple_elem.
+    # Exit a parse tree produced by LemurUserParser#ntuple_elem.
     def exitNtuple_elem(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#nlinkedlist.
+    # Enter a parse tree produced by LemurUserParser#nlinkedlist.
     def enterNlinkedlist(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#nlinkedlist.
+    # Exit a parse tree produced by LemurUserParser#nlinkedlist.
     def exitNlinkedlist(self, ctx):
         pass
 
 
-    # Enter a parse tree produced by NFCPUserParser#nlinkedlist_elem.
+    # Enter a parse tree produced by LemurUserParser#nlinkedlist_elem.
     def enterNlinkedlist_elem(self, ctx):
         pass
 
-    # Exit a parse tree produced by NFCPUserParser#nlinkedlist_elem.
+    # Exit a parse tree produced by LemurUserParser#nlinkedlist_elem.
     def exitNlinkedlist_elem(self, ctx):
         pass
 

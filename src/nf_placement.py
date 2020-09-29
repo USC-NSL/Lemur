@@ -15,7 +15,7 @@ import ast
 import random
 import numpy as np
 from ast import literal_eval as make_tuple
-from user_level_parser.UDNFCPUserListener \
+from user_level_parser.UDLemurUserListener \
     import convert_nf_graph, convert_global_nf_graph
 from collections import OrderedDict, defaultdict
 from operator import itemgetter

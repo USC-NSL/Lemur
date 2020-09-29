@@ -17,14 +17,6 @@
 * (4) call "p4_code_generator" 
 * Goal: generate P4 code and output it
 *
-* Author: Jianfeng Wang
-* Time: 02/22/2018
-* Email: jianfenw@usc.edu
-*
-* Author: Yu-Chuan Yen
-* Time: 03/20/2018
-* Email: yeny@usc.edu
-*
 """
 
 from __future__ import print_function
@@ -158,7 +150,7 @@ def nfcp_compiler_main():
     # NFCP Compiler New Version (Refer: nfcp_user_level_parser.py)
     # Use the 'configParser' class to parser the NF chain configuration file
     p4_logger.info('NFCP ConfParser is running...')
-    conf_parser = configParser.nfcp_config_parser(config_filename)
+    conf_parser = configParser.Lemur_config_parser(config_filename)
     for flowspec_name, nfchain_name in conf_parser.scanner.flowspec_nfchain_mapping.items():
         chain_ll_node = conf_parser.scanner.struct_nlinkedlist_dict[nfchain_name]
         flowspec_instance = conf_parser.scanner.struct_nlist_dict[flowspec_name]

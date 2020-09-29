@@ -9,7 +9,7 @@ Email: yeny@usc.edu
 
 import re
 import logging
-from user_level_parser.UDNFCPUserListener \
+from user_level_parser.UDLemurUserListener \
     import convert_nf_graph
 from nf_placement import log_module, segment_module_list
 
