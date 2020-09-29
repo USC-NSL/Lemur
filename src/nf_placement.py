@@ -44,18 +44,27 @@ PKT_SIZE = 1500*8
 FREQ = 1700
 
 def read_para():
-    '''
-    This func reads the content of FILE 'module_data.txt'.
-    It is used to parse the profile number of each BESS
-    module and keep (BESS_module_class, required_cycles)
-    in a dictionary 'bess_para.' A special profile number
-    called 'constraints' is the number of available cores.
-    The return values are 'bess_para' dictionary and 
-    'constraints'.
-    '''
+    """ Read data from module_data.txt and construct
+        a dictionary of BESS module name to profiled
+        cycles and extract the core constraints
+
+    Parameter:
+    
+    Returns:
+    bess_para: a dictionary of BESS module name 
+                mapping to its profiled cycles
+    constraints_all: number of available BESS cores
+
+    """
     bess_para = {}
     constraints_all = {}
-    fp = open('module_data.txt', 'r')
+
+    try:
+        fp = open('module_data.txt', 'r')
+    except:
+        print("module_data.txt is not provided. Fatal error!")
+        raise error
+
     for line in fp:
         information = line.split()
         if information:
@@ -64,25 +73,29 @@ def read_para():
                 bess_para[information[1]] = information[2]
             else:
                 warnings.warn('Warning: unrecognized device info or using p4 module')
-    PLACE_LOGGER.debug("read-in info bess module: %r", bess_para)
+
     constraint = bess_para.get("constraints")
     if constraint:
         constraints_all['bess_core'] = int(constraint)
     return bess_para, constraints_all
 
 def enum_case(module_list):
-    '''
-    This func would enum all possible cases for a chain.
-    The input would be a module list belonging to a chain.
-    The output would be enum cases which asserts
-    '''
-    num_bit = len(module_list)
+    """ Enum all possible placement for NF chain.
+    
+    Parameter:
+    module_list: all NF modules
+
+    Returns:
+    enum_list: a list of all possible placement
+    """
+
     option_count = 0
     enum_list = []
 
     for module in module_list:
         if module.is_both():
             option_count += 1
+
     if option_count>0:
         total_case = (1<<option_count)
     else:
@@ -110,50 +123,20 @@ def enum_case(module_list):
 
     return enum_list
 
-def find_max(module_list, module, pattern, para_list):
-    '''
-    Given module list, profile number and target pattern as input, 
-    this func recursively calculates the max cycles of a chain.
-    The final return value is the max cycle of a chain and it is 
-    used to proportionally estimate the throughput.
-    '''
-    value = 0
-    #PLACE_LOGGER.debug("find_max: %s", module)
-    ref = module_list.index(module)
-    mode_bit = (pattern>>(len(module_list)-ref-1))%2
-    return_module = None
-    if mode_bit:
-        core_num = module.core_num
- #       print(module.nf_class+ para_list.get(str(module.nf_class))+ " core num "+ str(core_num))
-        if module.core_num >=2:
-            core_num = module.core_num -1
-        if int(para_list.get(str(module.nf_class))) < BASE_CYCLE:
-            core_num = 1
-        value = int(para_list.get(str(module.nf_class)))/core_num
-    else:
-        value = 0
-    
-    latest_max = 0
-    for child in module.adj_nodes:
-        value_child, max_value, get_module = \
-            find_max(module_list, child, pattern, para_list)
-        latest_max = max(latest_max, max_value/len(module.adj_nodes))
-        if latest_max == (max_value/len(module.adj_nodes)):
-            return_module = get_module
-        value = int(value) + (value_child/len(module.adj_nodes))
-        latest_max = max(latest_max, value)
-        if latest_max == value:
-            return_module = module
-
-    return value, latest_max, return_module
-
 def notate_list(target_list, bess_core, mask_pattern):
-    '''
-    Given list of module, this func changes the number of cores for
-    each BESS module according to input 'bess_core' assignment. By 
-    changing the number of cores, it represents the module within a
-    subgroup would be duplicated for how many copies. 
-    '''
+    """ Notate deployment hardware and assigned # of cores
+        to each NF instance in NF chains
+
+    Parameter:
+    target_list: all NF modules
+    bess_core: a list of # cores to be assigned to each
+               NF instance
+    mask_pattern: the deployment decision
+
+    Returns:
+    target_list: all notated NF modules
+
+    """
     start_index = 0
     flip_bit = False
     skip = False
@@ -184,19 +167,22 @@ def notate_list(target_list, bess_core, mask_pattern):
     return target_list
 
 def segment_module_list(all_modules):
-    '''
-    This func is used to segment a huge list of modules into several
-    sub-lists of modules, where each sub-list contains the modules of
-    a certain chain. Thus, this func gets a huge list 'all_modules' as
-    input and output a list of lists.
-    '''
-    cut_index = []
+    """ Segment all NF modules into lists of modules
+
+    Parameter:
+    all_modules: all NF modules
+
+    Returns:
+    chain_module_list: lists of (service chain) modules
+    cut_index: the indexes of all NF modules that are
+               used to separate service chains
+    """
     start = 0
     chain_module_list = []
+    cut_index = []
     for module in all_modules:
         if len(module.adj_nodes)==0:
             cut_index.append(all_modules.index(module))
-#            print "module.time", module.time
     for index in cut_index:
         module_list = all_modules[start: index+1]
         start = index+1
@@ -204,14 +190,18 @@ def segment_module_list(all_modules):
     return chain_module_list, cut_index
 
 def no_core_op_calc_cycle(pattern_list, module_list, bess_para):
-    '''
-    This func is to calculate the throughput of no_core_optimization
-    algorithm. This algorithm does not consider duplicate modules, so
-    there is no phase-2, i.e. packing phase involved. The return value
-    is a dictionary of <pattern, throughput>.
-    '''
+    """ Calculate the throughput of no_core_optimization algorithm
+
+    Parameter:
+    pattern_list: all possible placements
+    module_list: all NF modules
+    bess_para: BESS module name mapping to profiled cycles
+
+    Returns:
+    pattern_throughput_dict: a dictionary of placement and its
+                             corresponding throughput
+    """
     nic = get_nic_info()
-    avail_nic_num = len(nic["nic"])
     pattern_throughput_dict = []
     module_list = tag_chain_index(module_list)
     weight_dict = generate_weight(module_list)
@@ -225,9 +215,6 @@ def no_core_op_calc_cycle(pattern_list, module_list, bess_para):
                 module_info.append([module.nic_index, module.core_num]) 
             pattern_throughput_dict.append([0, module_info, MAX_THROUGHPUT])
         else:
-            pattern_binary = "{0:b}".format(pattern)
-            tmp_tuple_list = [1]*pattern_binary.count('1')
-            ones_tuple = tuple(tmp_tuple_list)
             module_list_backup = copy.deepcopy(module_list)
             total_module_num = len(module_list)
             for module_index in range(total_module_num):
@@ -235,7 +222,6 @@ def no_core_op_calc_cycle(pattern_list, module_list, bess_para):
                 module_list_backup[module_index].nf_type = mode_bit
                 if mode_bit == 1:
                     module_list_backup[module_index].nic_index = 0
-#            notate_module_list = notate_list(module_list_backup, ones_tuple, pattern)
             notate_module_list = module_list_backup
             cp_final_module = copy.deepcopy(notate_module_list)
 
@@ -243,7 +229,8 @@ def no_core_op_calc_cycle(pattern_list, module_list, bess_para):
             left_matrix = []
             right_matrix = []
             for sub_list in bess_subgroup_list:
-                left_vector, right_const = inequal_form(sub_list, total_chain_num, bess_para)
+                left_vector, right_const = inequal_form(sub_list, \
+                                        total_chain_num, bess_para)
                 left_matrix.append(left_vector)
                 right_matrix.append(right_const)
             sum_of_left_traffic = [0]*total_chain_num
@@ -262,109 +249,41 @@ def no_core_op_calc_cycle(pattern_list, module_list, bess_para):
                 for module in cp_final_module:
                     core_num_all.append([module.nic_index, module.core_num])
                 pattern_throughput_dict.append([pattern, core_num_all, mr, sum(mr)])
-    '''
-    pattern_len = len(module_list)
-    pattern_cycle_dict = []
-    cut_index = []
-    for module in module_list:
-        if len(module.adj_nodes) == 0:
-            cut_index.append(module_list.index(module))
-    for pattern in pattern_list:
-        print pattern
-        start = -1
-        total_throughput = 0
-        for index in cut_index:
-            max_cycle = 0
-            mask_pattern = ((pattern&((1<<(pattern_len-start-1))-1))>>(pattern_len-index-1))
-            tmp_module_list = copy.deepcopy(module_list[start+1:index+1])
-            _, max_cycle, get_module = find_max(tmp_module_list, tmp_module_list[0], mask_pattern, bess_para)
-            if max_cycle == 0:
-                max_cycle = 0.01
-            total_throughput = total_throughput + math.log10(1/float(max_cycle))
-            start = index
-        pattern_cycle_dict.append([pattern, total_throughput])
-    print pattern_cycle_dict
-    '''
+
     return pattern_throughput_dict
 
-def dup_able_count(pattern, chain_module):
-    '''
-    This func is to calculate how many subgroups can be duplicated in A chain.
-    A subgroup is formed when a continuous group of BESS modules are bounded
-    by P4 modules. The cautions are some modules are not able to be duplicated
-    that are marked to be 'dup_avoid' and branches are not allowed to be
-    duplicated.
-    '''
-    flip_bit = False
-    chain_len = len(chain_module)
-    subgroup_num = 0
-    skip = False
-    for i in range(len(chain_module)):
-        if chain_module[i].is_branch_node():
-            skip = True
-        elif chain_module[i].is_merge():
-            skip = False
-        if not skip and not chain_module[i].is_dup_avoid():
-            mode_bit = (pattern>>(chain_len-i-1))%2
-            if mode_bit^flip_bit:
-                flip_bit = not flip_bit
-                if mode_bit:
-                    subgroup_num += 1
-        elif chain_module[i].is_dup_avoid():
-            flip_bit = False
-    return subgroup_num
-
-def count_subgroup_num(pattern, module_list):
-    '''
-    This func is to calculate how many subgroups exist among chains.
-    It utilizes dup_able_count func to calculate the number for each
-    chain and then aggregate the total subgroup number. The output is
-    a list of subgroup count for each chain.
-    '''
-    cut_index = []
-    pattern_len = len(module_list)
-    subgroup_count_list = []
-    for module in module_list:
-        if len(module.adj_nodes) == 0:
-            cut_index.append(module_list.index(module))
-    start = -1
-    subgroup_count = 0
-    for index in cut_index:
-        mask_pattern = ((pattern&((1<<(pattern_len-start-1))-1))>>(pattern_len-index-1))
-        tmp_module_list = copy.deepcopy(module_list[start+1:index+1])
-        subgroup_count_list.append( dup_able_count(mask_pattern, tmp_module_list))
-        start = index
-    return subgroup_count_list
-
-def calc_addition(pattern, cut_index, pattern_len):
-    '''
-    For calculation of how many spare cores for duplication usage,
-    we preserve two cores for each chain head, but some chain might
-    be fit into P4 without any BESS modules. Thus, this func is to 
-    calculate how many cores can actually be retrieved back from
-    preservation to be used as spare cores.
-    '''
-    target_num = 0
-    start = -1
-    for index in cut_index:
-        mask_pattern = ((pattern&((1<<(pattern_len-start-1))-1))>>(pattern_len-index-1))
-        if int(mask_pattern) == int(0):
-            target_num += 1
-        start = index
-    return target_num
-
 def not_satisfy_rate(test, restrict, min_only_bool):
-    #condition_bool = False
+    """ Examine if the computed throughput meets SLO
+
+    Parameter:
+    test: examined throughput number
+    restrict: min and max throughput in a list
+    min_only_bool: flagged when examining only min
+                   throughput
+
+    Returns:
+    True if the throughput meets SLO requirement
+    False otherwise
+
+    """
+
     if min_only_bool:
         return test<int(restrict[0])
     else:
         if test<int(restrict[0]) or test>int(restrict[1]):
-    #    print("failed case:", test_cycle, restrict_cycle[0], restrict_cycle[1]) 
             return True
         else:
             return False
 
 def get_rate():
+    """ Read min/max requirement from chain_rate.txt
+
+    Parameter:
+
+    Returns:
+    rate: min and max throughput in a list
+
+    """
     rate = []
     fp = open("chain_rate.txt",'r')
     for line in fp:
@@ -374,23 +293,47 @@ def get_rate():
             new_list.append(float(number))
         rate.append(tuple(new_list))
     rate = tuple(rate)
-#    print(rate)
     return rate
 
 def get_nic_info():
+    """ Load available nic(s) info
+
+    Parameter:
+
+    Returnes:
+    data: a dictionary containing each nic detail
+    """
     with open('device.txt') as f:
         data = json.load(f)
     return data
 
 def get_delay():
+    """ Get delay requirement from max_delay.txt
+
+    Parameter:
+
+    Returns:
+    delay_ls: a list of max delay for each chain
+    
+    """
     fp = open("max_delay.txt", 'r')
     delay_ls = []
     for line in fp:
         delay_ls.append(float(line)*FREQ)
-#    print "read in delay constraint:", delay_ls
     return delay_ls
 
 def bfs_sort(module_list):
+    """ Find out subgroups in chains
+
+    Parameter:
+    module_list: all NF modules of a service chain
+
+    Returns:
+    bess_list: lists of BESS subgroups
+    p4_list: NF instances assigned to PISA switch
+
+    """
+
     p4_list = []
     bess_list = []
     queue_bess = []
@@ -415,7 +358,6 @@ def bfs_sort(module_list):
             while len(queue_bess)>0:
                 sub_module = queue_bess.pop(0)
                 for index in range(len(bess_list)-1):
-#                    print "index", index, "length of bess_list", len(bess_list)
                     if sub_module in bess_list[index]:
                         insert_index = index
                         last_insert = bess_list.pop(-1)
@@ -430,6 +372,20 @@ def bfs_sort(module_list):
     return bess_list, p4_list 
 
 def count_dup(nic_index, list_index, bess_subgroup_list):
+    """ Differentiate non-replicable/replicable subgroups
+
+    Parameter:
+    nic_index: the subgroup is assigned to which nic index
+    list_index: index of the number of subgroups
+    bess_subgroup_list: lists of subgroup
+
+    Returns:
+    dup_num: number of replicable subgroups
+    dup_list: a list of replicable subgroups
+    no_dup_list: a list of non-replicable subgroups
+
+    """
+
     dup_num = len(list_index)
     dup_list = []
     no_dup_list = []
@@ -437,10 +393,10 @@ def count_dup(nic_index, list_index, bess_subgroup_list):
         dup_bool = True
         sub_list = bess_subgroup_list[index]
         for module in sub_list:
-#            print module.nf_class, "in count_dup", module.parent_count
             module.nic_index = nic_index
         for module in sub_list:
-            if module.is_dup_avoid() or module.is_branch_node() or len(module.prev_nodes)>1:
+            if module.is_dup_avoid() or module.is_branch_node()\
+                                    or len(module.prev_nodes)>1:
                 dup_num -= 1
                 dup_bool = False
                 break
@@ -451,28 +407,60 @@ def count_dup(nic_index, list_index, bess_subgroup_list):
     return dup_num, dup_list, no_dup_list
 
 def tag_core(dup_list, dup_tuple):
+    """ Notate number of cores assigned to 
+        replicable subgroups
+
+    Parameter:
+    dup_list: a list of replicable subgroups
+    dup_tuple: a tuple where each element represents
+               number of cores assigned to a subgroup
+
+    Returns:
+    dup_list: a notated list of replicable subgroups
+
+    """
+
     for i in range(len(dup_list)):
         for module in dup_list[i]:
             module.core_num = 1+dup_tuple[i]
             if module.core_num <1:
-                print "HAPPENING HERE"
+                print "Core assignment error"
+                raise error
     return dup_list
 
 def tag_chain_index(module_list):
+    """ Notate chain index to each module
+
+    Parameter:
+    module_list: all NF modules
+
+    Returns:
+    module_list: all NF modules with chain index notated    
+
+    """
     index_ptr = 1
     for module in module_list:
         module.chain_index = index_ptr
         if len(module.adj_nodes)==0:
             index_ptr+=1
-#        print("module_chain_index: ", module.chain_index)
     return module_list
 
 def tag_core_index(subgroup):
+    """ Tag CPU core index to each module
+        in a subgroup 
+    
+    Parameter:
+    subgroup: a subgroup of modules
+
+    Returns:
+    return_subgroup: the subgroup of modules with core
+                     index notated
+
+    """
     default_value = 0
     queue_a = []
     return_subgroup = []
     cp_subgroup = copy.deepcopy(subgroup)
-#    print "before tag:", len(subgroup)
 
     while len(cp_subgroup)>0:
         module = cp_subgroup.pop(0)
@@ -489,12 +477,20 @@ def tag_core_index(subgroup):
             return_subgroup.append(target_module)
         default_value += 1
     return_subgroup.sort(key=lambda l: (l.service_path_id, l.service_id))
-#    for module in return_subgroup:
-#        print module.nf_class, " core index", module.core_index
-#    print "after tag:", len(return_subgroup)
     return return_subgroup
 
 def tag_weight(module_list, weight_dict):
+    """ Tag adjusted weight for throughput computation
+
+    Parameter:
+    module_list: all NF modules
+    weight_dict: a dictionary of weights to be tagged
+
+    Returns:
+    module_list: all NF modules with tagged adjusted weight
+
+    """
+
     head = True
     for module in module_list:
         if head:
@@ -506,61 +502,74 @@ def tag_weight(module_list, weight_dict):
             head = True
     for i in range(len(module_list)):
         for adj_node in module_list[i].adj_nodes:
-#            adj_node.parent_count += 1
-            index_str = "W%d%d%d%d" % (module_list[i].service_path_id, module_list[i].service_id,\
-                adj_node.service_path_id, adj_node.service_id)
-            adj_node.weight = adj_node.weight + module_list[i].weight*weight_dict[index_str]
+            index_str = "W%d%d%d%d" % (module_list[i].service_path_id,\
+                        module_list[i].service_id,\
+                        adj_node.service_path_id,\
+                        adj_node.service_id)
+            adj_node.weight = adj_node.weight + \
+                        module_list[i].weight*weight_dict[index_str]
     return module_list
 
 def tag_from_notated_list(module_list, notated_list):
-    '''
-    Tagged from the copy list and tag string weight
-    '''
-    '''
-    head = True
-    for module in module_list:
-        if head:
-            module.weight = 1
-            head = False
-        else:
-            module.weight = 0
-        if len(module.adj_nodes) == 0:
-            head = True
-    '''
-#        print("Before changes: %s %.10f" % (module.nf_class, module.weight))
+    """ Copy essential notations from another list
+
+    Paramter:
+    module_list: a list of NF modules to be notated
+    notated_list: the list that already contains 
+                  notation information
+
+    """
     for i in range(len(module_list)):
         module_list[i].core_num = notated_list[i].core_num
         module_list[i].nic_index = notated_list[i].nic_index
         module_list[i].chain_index = notated_list[i].chain_index
         module_list[i].nf_type = notated_list[i].nf_type
         module_list[i].core_index = notated_list[i].core_index
-#        print("%s %.10f" % (module_list[i].nf_class, module_list[i].weight))
-        '''
-        for adj_node in module_list[i].adj_nodes:
-            index_str = "W%d%d%d%d" % (module_list[i].service_path_id, module_list[i].service_id,\
-                adj_node.service_path_id, adj_node.service_id)
-            adj_node.weight = adj_node.weight + module_list[i].weight*weight_dict[index_str]
-#            print("adj_node.weight %d, add value %d" % (adj_node.weight, module_list[i].weight*weight_dict[index_str]))
-        '''
+
     return module_list
 
 def generate_weight(module_list):
+    """ Calculate the adjusted weight for throughput
+        computation and store them in a dictionary
+
+    Parameter:
+    module_list: all NF modules
+
+    Returns:
+    weight_dict: a dictionary containing adjusted
+                 weight information
+ 
+    """
     weight_dict={}
     module_list.sort(key=lambda l: (l.service_path_id, l.service_id))
     for i in range(len(module_list)):
         for adj_node in module_list[i].adj_nodes:
-            transition_str = "W%d%d%d%d" % (module_list[i].service_path_id, module_list[i].service_id,\
-                        adj_node.service_path_id, adj_node.service_id)
-            weight_dict[transition_str] = int(1)/float(len(module_list[i].adj_nodes))
-#            print("transition %s value %.10f" % (transition_str, weight_dict[transition_str]))
-#    print(weight_dict)
+            transition_str = "W%d%d%d%d" % (module_list[i].service_path_id,\
+                            module_list[i].service_id,\
+                            adj_node.service_path_id, \
+                            adj_node.service_id)
+            weight_dict[transition_str] = \
+                            int(1)/float(len(module_list[i].adj_nodes))
     return weight_dict
 
 def err_add(number, percentage):
-#    error_percent = random.uniform(0-percentage, percentage)
+    """ Add artificial error in percentage 
+        to the profiled CPU cycle
+
+    Parameter:
+    number: the profiled CPU cycle
+    percentage: error percentage
+
+    Returns:
+    adjusted CPU cycles
+    """
+
     return number*(1+percentage)
 
 def inequal_form(sub_list, total_chain_num, para_list):
+    """
+    """
+
     global error_rate
     return_vector = [0]*total_chain_num
     return_weight = 0
@@ -572,13 +581,14 @@ def inequal_form(sub_list, total_chain_num, para_list):
         core_num = module.core_num
         if module.core_num <1:
             print "warning", module.nf_class
+            raise error
         str_list.append("%d%d" % (module.service_path_id, module.service_id))
-#        print "discovered core index", module.core_index
         if module.core_index not in right_index_dict:
             right_index_dict[module.core_index] = 0
-#        print module.nf_class
-        right_index_dict[module.core_index] += module.weight*err_add(int(para_list.get(str(module.nf_class))),error_rate)/float(core_num)
-#        return_weight += module.weight*int(para_list.get(str(module.nf_class)))/float(core_num)
+        right_index_dict[module.core_index] += \
+            module.weight*err_add(int(para_list.get(str(module.nf_class))),\
+            error_rate)/float(core_num)
+
     for module in sub_list:
         add_to_queue = True
         for adj_node in module.adj_nodes:
@@ -588,6 +598,7 @@ def inequal_form(sub_list, total_chain_num, para_list):
                 add_to_queue = False
             if add_to_queue and module not in end_node_queue:
                 end_node_queue.append(copy.deepcopy(module))
+
     for node in end_node_queue:
         child_num = 0
         for child in node.adj_nodes:
@@ -601,7 +612,7 @@ def inequal_form(sub_list, total_chain_num, para_list):
         right_vector.append(right_index_dict[key])
     bottleneck_cycle = max(right_vector)
     return_weight = CPU_FREQ/float(bottleneck_cycle)*PKT_SIZE
-#    return_weight = CPU_FREQ/float(return_weight)*PKT_SIZE
+
     return return_vector, return_weight
 
 def calc_delay(module_list, para_list):
@@ -635,7 +646,6 @@ def verify_time(module_list):
     delay_ls = get_delay()
     success_bool = True
     for index in range(len(delay_ls)):
-#        print "chain ", index, "delay constraint: ", delay_ls[index], "compute time:", end_of_node_time[index]
         if delay_ls[index] < end_of_node_time[index]:
             success_bool = False
     return success_bool, end_of_node_time
@@ -652,13 +662,8 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
     chain_rate = get_rate()
     total_chain_num = len(chain_rate)
     spare_core = int(nic["nic"][0]["core"])-RESERVE_CORE
-    #print "pattern", pattern_list
-    print "Length of pattern:", len(pattern_list) 
     pattern_counter = 0
     for pattern in pattern_list:
-#        print "pattern", pattern
-        if pattern_counter%10 == 0:
-            print "handling ", pattern_counter, " pattern"
         pattern_counter += 1
         pattern_start = time.time()
         usable_core = spare_core
@@ -669,7 +674,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
             pattern_throughput_dict.append([0, module_info, MAX_THROUGHPUT])
         else:
             pattern_binary = "{0:b}".format(pattern)
-#            print pattern_binary
             tmp_tuple_list = [1]*pattern_binary.count('1')
             ones_tuple = tuple(tmp_tuple_list)
             module_list_backup = copy.deepcopy(module_list)
@@ -678,7 +682,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
             time_bool, end_of_node_time = verify_time(notate_module_list)
 
             if not time_bool:
-#                print "UNQUALIFY"
                 continue
 
             chain_module_list, _ = segment_module_list(notate_module_list)
@@ -687,7 +690,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
             final_dict = []
 
             for chain_index in range(total_chain_num):
-#                print "chain_index", chain_index, " usable_core:", usable_core
                 chain_success = False
                 chain_bess, chain_p4 = bfs_sort(copy.deepcopy(chain_module_list[chain_index]))
                 if len(chain_bess) == 0:
@@ -703,8 +705,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
                         left_vector, right_const = inequal_form(no_dup_sublist, len(chain_module_list), bess_para)
                         left_value = max(left_vector)
                         if (right_const/float(left_value) < chain_rate[chain_index][0]): 
-#                            log_module(no_dup_sublist)
-#                            print("BUGGGGGG? right_const: %d left_value: %d" % (right_const, left_value))
                             infeasible = True
                         else:
                             usable_core -= 1
@@ -714,7 +714,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
                         left_value = max(left_vector)
                         if not_satisfy_rate(right_const/float(left_value), chain_rate[chain_index], True):
                             used_core = math.ceil(chain_rate[chain_index][0]*float(left_value)/right_const)
-#                            print"used_core: ", used_core
                             if used_core > usable_core:
                                 infeasible = True
                             else:
@@ -735,34 +734,26 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
                             final_module.extend(no_dup_sublist)
                         for index in range(len(dup_list)):
                             if bool_tag[index]:
-#                                print dup_list[index][0].nf_class
                                 final_dict.append(dup_list[index])
                             else:
                                 final_module.extend(dup_list[index])
                         final_module.extend(chain_p4)
             pattern_preallocate_end = time.time()
             if not infeasible:
-#                feasible_start = time.time()
                 if len(final_dict)>0 and usable_core>0:
 
-#                    rng = list(range(int(usable_core)+1))*len(final_dict)
-#                    core_iter = itertools.permutations(rng, len(final_dict))
                     core_iter = itertools.combinations_with_replacement(list(range(len(final_dict))), int(usable_core))
                     core_dict = []
                     for core_tuple in core_iter:
-#                        core_start = time.time()
                         tmp_ls = []
-#                        print "core_tuple before", core_tuple
                         for index in range(len(final_dict)):
                             tmp_ls.append(core_tuple.count(index))
                         core_tuple = tuple(tmp_ls)
-#                        print core_tuple
                         cp_final_dict = copy.deepcopy(final_dict)
                         if core_tuple in core_dict:
                             continue
                         else:
                             core_dict.append(core_tuple)
-#                        print "core_tuple", core_tuple
                         if sum(core_tuple) == usable_core:
                             cp_final_module = copy.deepcopy(final_module)
                             cp_final_module.sort(key=lambda l: (l.service_path_id, l.service_id))
@@ -775,8 +766,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
                                 cp_final_module.extend(sublist)
                             cp_final_module.sort(key=lambda l: (l.service_path_id, l.service_id))
                             tmp_module_list = copy.deepcopy(module_list)
-#                            for module in cp_final_module:
-#                                print module.nf_class, module.core_num
                             tmp_module_list = tag_from_notated_list(tmp_module_list, cp_final_module)
                             bess_subgroup_list, p4_list = bfs_sort(tmp_module_list)
                             left_matrix = []
@@ -789,8 +778,6 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
                             sum_of_left_traffic = (np.sum(left_matrix, axis=0)).tolist()
                             left_matrix.append(sum_of_left_traffic)
                             right_matrix.append(int(nic["nic"][int(0)]["throughput"])*1000000)
-#                            print("left matrix", left_matrix)
-#                            print("right matrix", right_matrix)
                             left_matrix = np.array(left_matrix)
                             right_matrix = np.array(right_matrix)
                             t = maximizeMarginalRate(chain_rate, left_matrix, right_matrix)
@@ -804,20 +791,11 @@ def speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints):
                                     core_num_all.append([module.nic_index, module.core_num])
                                 pattern_throughput_dict.append([pattern, core_num_all, end_of_node_time, sum(end_of_node_time),  mr, sum(mr)])
                             core_end = time.time()
-#                            print "each core iter time", core_end-core_start
-#                    feasible_end = time.time()
-#                    print "time gap", feasible_end - core_end
-#                    print "pattern preallocate", pattern_preallocate_end-pattern_start
-#                    print "allocate spare cores", feasible_end - feasible_start
                 elif len(final_dict)>0 and usable_core == 0:
-#                    print "ever here"
                     cp_final_module = copy.deepcopy(final_module)
-#                    print "final_module length:", len(final_module)
-#                    print "dup_list length:", len(dup_list)
                     for sublist in final_dict:
                         cp_final_module.extend(sublist)
                     cp_final_module.sort(key=lambda l: (l.service_path_id, l.service_id))
-#                    print "length:", len(cp_final_module) 
                     tmp_module_list = copy.deepcopy(module_list)
                     tmp_module_list = tag_from_notated_list(tmp_module_list, cp_final_module)
                     bess_subgroup_list, p4_list = bfs_sort(tmp_module_list)
@@ -886,14 +864,10 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
     module_list = tag_chain_index(copy.deepcopy(module_list))
     weight_dict = generate_weight(module_list)
     module_list = tag_weight(module_list, weight_dict)
-#    for module in module_list:
-#        print("module class ", module.nf_class, "module chain_index ", module.chain_index)
     chain_rate = get_rate()
     total_chain_num = len(chain_rate)
     loop_index = 0
-    print "how many pattern in total: ", len(pattern_list)
     for pattern in pattern_list:
-        print "loop number: ", loop_index
         success_count = 0
         loop_index += 1
         if pattern == 0:
@@ -901,7 +875,6 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
             pattern_throughtput_dict.append([0, none_tuple, MAX_THROUGHPUT])
         else:
             pattern_binary = "{0:b}".format(pattern)
- #           print(pattern_binary)
             tmp_tuple_list = [1]*pattern_binary.count('1')
             ones_tuple = tuple(tmp_tuple_list)
             tmp_module_list = copy.deepcopy(module_list)
@@ -918,10 +891,8 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
                 for j in range(all_subgroup_num):
                     placement_array.append(index%avail_nic_num)
                     index = index/avail_nic_num
-#                print("placement array", placement_array)
                 unique_entries = set(placement_array)
                 indices = { value : [ i for i, v in enumerate(placement_array) if v == value ] for value in unique_entries }
-#                print(indices)
                 core_alloc_array = {}
                 core_alloc_no_dup = {}
                 core_alloc_iter = {}
@@ -934,8 +905,6 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
                     core_alloc_iter[key] = []
                     if dup_num>0:
                         spare_core = int(nic["nic"][int(key)]["core"])-RESERVE_CORE-len(indices[key])
-#                        rng = list(range(spare_core+1))*dup_num
-#                        core_iter = itertools.permutations(rng, dup_num)
                         core_iter = tuple()
                         if spare_core >0:
                             core_iter = itertools.combinations_with_replacement(list(range(dup_num)), int(spare_core))
@@ -955,23 +924,18 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
                     if len(core_alloc_iter[nic_index]) == 0:
                         diff_core_num = 1
                     com_times = com_times*diff_core_num
-#                    print('com_times', com_times)
                 for j in range(com_times):
-#                    print("j ", j)
                     notated_final = []
                     chain_locate = {}
                     left_matrix = []
                     right_matrix = []
-#                    print("key in core_alloc_iter", core_alloc_iter.keys())
                     for key in core_alloc_iter:
                         chain_locate[key] = []
                         tagged_list = core_alloc_array[key]
                         if len(core_alloc_iter[key]) != 0:                                                 
                             tuple_index = j%len(core_alloc_iter[key])
-#                            print(len(core_alloc_iter[key]))
                             core_tuple = core_alloc_iter[key][tuple_index]
                             j = j/len(core_alloc_iter[key])
-#                            print "nic_index", key, "assign tuple", core_tuple
                             tagged_list = tag_core(core_alloc_array[key], core_tuple)
                         else:
                             for sub_list_no_assign in core_alloc_array[key]:
@@ -989,12 +953,7 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
                             left_matrix.append(left_vector)
                             right_matrix.append(right_const)
                             notated_final.extend(copy.deepcopy(sub_list))
-#                        print("core_tuple ", core_tuple)
-#                            for module in sub_list_dup:
-#                                print(module.nf_class, module.service_path_id, module.service_id, module.nf_type, module.core_num)
-#                    print("chain locate", chain_locate.keys())
                     for nic_index in chain_locate:
-#                        print("nic_index", nic_index, " length ", len(chain_locate[nic_index]))
                         return_vector = [0]*total_chain_num
                         for subgroup_of_nic in chain_locate[nic_index]:
                             get_vector, _ = inequal_form(subgroup_of_nic, total_chain_num, bess_para)
@@ -1002,31 +961,22 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
                                 return_vector[chain_index] = return_vector[chain_index]+get_vector[chain_index]
                         left_matrix.append(return_vector)
                         right_matrix.append(int(nic["nic"][int(nic_index)]["throughput"])*1000000)
-#                    print("left matrix", left_matrix)
-#                    print("right matrix", right_matrix)
                     left_matrix = np.array(left_matrix)
                     right_matrix = np.array(right_matrix)
                     t = maximizeMarginalRate(chain_rate, left_matrix, right_matrix)
-#                    print "Throughput", t
                     mr =  marginalRate(chain_rate, t)
-#                    print "MarginalRate", mr
                     notated_final.extend( copy.deepcopy(p4_list))
                     notated_final.sort(key=lambda l: (l.service_path_id, l.service_id))
-#                    print("length of notated_final",len(notated_final))
                     tmp_module_list = tag_from_notated_list(tmp_module_list, notated_final)
                     chain_list, cut_index = segment_module_list(tmp_module_list)
                     start = -1
                     pattern_len = len(notated_final)
                     total_throughput = 0
                     chain_throughput = {}
-                    #print "MarginalRate", marginalRate(chain_rate, t)
                     fail_satisfaction = False
                     for chain_index in range(total_chain_num):
                         if not_satisfy_rate(t[chain_index], chain_rate[chain_index], False):
                             fail_satisfaction = True
-#                            print("found case chain "+str(chain_index))
-#                            print(chain_throughput[chain_index])
-#                            print(beta_para[chain_index]*chain_throughput[chain_index])
                     total_throughput = sum(mr)
                     core_num_all = []
                     for module in notated_final:
@@ -1034,8 +984,6 @@ def calc_cycle(pattern_list, module_list, bess_para, constraints):
                     if not fail_satisfaction:
                         pattern_throughput_dict.append([pattern, core_num_all, mr, total_throughput])                        
                         success_count +=1
-#                        print [pattern, core_num_all, mr, total_throughput]
-        print "success count", success_count
     return pattern_throughput_dict
 
 def write_out_pattern_file(all_pattern_dict, chosen_pattern):
@@ -1073,10 +1021,7 @@ def optimize_pick(all_pattern_dict):
     '''
     This func sortss <pattern, throughput> dictionary
     '''
-#    print(all_pattern_dict)
     all_pattern_dict_order = sorted(all_pattern_dict, key=itemgetter(-1), reverse=True)
-#    print('chosen result: ')
-#    print(all_pattern_dict_order[0])
     chosen_pattern = all_pattern_dict_order[0][0]
     module_info = all_pattern_dict_order[0][1]
     expected_throughput = all_pattern_dict_order[0][-1]
@@ -1092,42 +1037,13 @@ def apply_pattern(module_list, chosen_pattern, module_info, bess_para):
     '''
     if chosen_pattern <0:
         print("no available assignment")
-        return
+        raise error
     total_len = len(module_list)
-    print(chosen_pattern)
-    print(module_info)
     for i in range(len(module_list)):
         mod_bit = (chosen_pattern>>(total_len-i-1))%2
         module_list[i].nf_type = mod_bit
         module_list[i].core_num = int(module_info[i][1])
         module_list[i].nic_index = int(module_info[i][0])
-#    for module in module_list:
-#        print(module.nf_class, module.nf_type, module.core_num)
-    '''
-    chain_rate = get_rate()
-    total_chain_num = len(chain_rate)
-    tmp_module_list = copy.deepcopy(module_list)
-    bess_subgroup_list, p4_list = bfs_sort(tmp_module_list)
-    for index in range(len(bess_subgroup_list)):
-        subgroup = bess_subgroup_list[index]
-        bess_subgroup_list[index] = tag_core_index(subgroup)
-    left_matrix = []
-    right_matrix = []
-    for sub_list in bess_subgroup_list:
-        left_vector, right_const = inequal_form(sub_list, total_chain_num, bess_para)
-        left_matrix.append(left_vector)
-        right_matrix.append(right_const)
-    sum_of_left_traffic = [0]*total_chain_num
-    sum_of_left_traffic = (np.sum(left_matrix, axis=0)).tolist()
-    left_matrix.append(sum_of_left_traffic)
-    right_matrix.append(int(nic["nic"][int(0)]["throughput"])*1000000)
-    left_matrix = np.array(left_matrix)
-    right_matrix = np.array(right_matrix)
-    print "left matrix", left_matrix
-    print "right matrix", right_matrix
-    t = maximizeMarginalRate(chain_rate, left_matrix, right_matrix)
-    mr =  marginalRate(chain_rate, t)
-    '''
     return  module_list
 
 def log_module(module_list):
@@ -1137,11 +1053,11 @@ def log_module(module_list):
     '''
     PLACE_LOGGER.info("Log module starts")
     for module in module_list:
-#        print("module %s, nf_type %d" % (module.nf_class, module.nf_type))
-#        print("module %s, spi: %d, si: %d, nf_type %d, core_num: %s, nic_index: %d, bounce: %r, merge: %r, core_index: %d", \
-#            module.nf_class, module.service_path_id, module.service_id, module.nf_type, module.core_num, module.nic_index,  module.bounce, module.merge, module.core_index)
-        PLACE_LOGGER.debug("module %s, spi: %d, si: %d, nf_type %d, core_num: %s, nic_index: %d, bounce: %r, merge: %r, core_index: %d", \
-            module.nf_class, module.service_path_id, module.service_id, module.nf_type, module.core_num, module.nic_index,  module.bounce, module.merge, module.core_index)
+        PLACE_LOGGER.debug("module %s, spi: %d, si: %d, nf_type %d,\
+            core_num: %s, nic_index: %d, bounce: %r, merge: %r, core_index: %d", \
+            module.nf_class, module.service_path_id, module.service_id, 
+            module.nf_type, module.core_num, module.nic_index, 
+            module.bounce, module.merge, module.core_index)
     PLACE_LOGGER.info("Log module ends")
     return
 
@@ -1193,7 +1109,6 @@ def next_optimize_pick():
         writeout_fp.write('\n')
     writeout_fp.close()
     core_alloc = ast.literal_eval(core_alloc)
-#    print core_alloc
     return chosen_pattern, core_alloc
 
 def count_bounce(module_list, pattern):
@@ -1227,21 +1142,13 @@ def no_profile_optimize_pick(pattern_list, module_list, bess_para, constraints):
     modules are assumed to use same number of cycles, and pick the best 
     throughput under this assumption.
     '''
-    print "before", bess_para
     for item_index in bess_para:
         bess_para[item_index] = '20000'
-
-    print bess_para
 
     all_chain_pattern_dict = speed_up_calc_cycle(pattern_list, module_list, bess_para, constraints)
     chosen_pattern, module_info, _ = optimize_pick(all_chain_pattern_dict)
 
         
-#    all_pattern_dict_order = sorted(pattern_dict, key=itemgetter(1), reverse=True)
-#    chosen_pattern = all_pattern_dict_order[0][0]
-#    pattern_binary = "{0:b}".format(chosen_pattern)
-#    tmp_tuple_list = [1]*pattern_binary.count('1')
-#    chosen_tuple = tuple(tmp_tuple_list)
     return chosen_pattern, module_info
 
 def individual_optimize_pick(module_list, bess_para, constraints):
@@ -1256,7 +1163,6 @@ def individual_optimize_pick(module_list, bess_para, constraints):
     chain_rate = get_rate()
     chosen_pattern = 0
     spare_core = int(nic["nic"][0]["core"])-RESERVE_CORE
-    print "spare_core", spare_core
 
     for module in module_list:
         if module.nf_type == 2:
@@ -1265,8 +1171,6 @@ def individual_optimize_pick(module_list, bess_para, constraints):
     
     cp_module_list = copy.deepcopy(module_list)
     chain_module_list, _ = segment_module_list(cp_module_list)
-#    for module in cp_module_list:
-#        print module.nf_class, module.nf_type
     num_of_chain = len(chain_module_list)
     final_module = []
     final_dict = {}
@@ -1281,13 +1185,11 @@ def individual_optimize_pick(module_list, bess_para, constraints):
         for index in range(len(chain_bess)):
             subgroup = chain_bess[index]
             chain_bess[index] = tag_core_index(subgroup)
-        print "chain_index", chain_index
         if len(chain_bess) == 0:
             final_module.extend(chain_p4)
             chain_success = True
         else:
             usable_core_left = usable_core - len(chain_bess)
-            print "usable_core_left", usable_core , usable_core_left
             if usable_core < 0:
                 infeasible = True
             else:
@@ -1305,9 +1207,6 @@ def individual_optimize_pick(module_list, bess_para, constraints):
                 for dup_sublist in dup_list:
                     left_vector, right_const = inequal_form(dup_sublist, len(chain_module_list), bess_para)
                     left_value = max(left_vector)
-#                    for module in dup_sublist:
-#                        print module.nf_class, module.nf_type
-                    print "right_const/left_value", right_const/float(left_value), left_vector, right_const
                     find = False
                     if not_satisfy_rate(right_const/float(left_value), chain_rate[chain_index], True):
                         used_core = 2
@@ -1315,7 +1214,6 @@ def individual_optimize_pick(module_list, bess_para, constraints):
                             if not not_satisfy_rate(right_const*(used_core)/float(left_value), chain_rate[chain_index], True):
                                 find = True
                                 usable_core = usable_core - used_core
-                                print "used_core", used_core
 
                             else:
                                 used_core += 1
@@ -1339,30 +1237,24 @@ def individual_optimize_pick(module_list, bess_para, constraints):
                         final_dict[dup_sublist[0].chain_index].append(copy.deepcopy(dup_sublist))
                     final_module.extend(chain_p4)
     if not infeasible:
-        print "inside infeasible"
         indexes = sorted(final_dict)
         for key in indexes:
             if usable_core >0:
                 subgroup_bottleneck = []
                 for subgroup in final_dict[key]:
                     subgroup_core = subgroup[0].core_num
-                    print("tick, core %s" % subgroup_core)
                     _ , right_const = inequal_form(subgroup, len(chain_rate), bess_para)
                     subgroup_bottleneck.append(right_const/float(subgroup_core))
-#                print("subgroup_bottleneck: %s" %subgroup_bottleneck)
                 min_bottleneck = min(subgroup_bottleneck)
                 min_index = subgroup_bottleneck.index(min_bottleneck)
-#                print("min_index:%s, key:%s"%(min_index,key))
                 stop = False
                 more_core = 0
                 bottleneck_core = final_dict[key][min_index][0].core_num
                 target_left, target_right = inequal_form(final_dict[key][min_index], len(chain_rate), bess_para)
                 target_left_value = max(target_left)
                 while not stop and usable_core-more_core >=0:
-#                    print("into add core")
                     more_core += 1
                     adjust_rate = (target_right/float(bottleneck_core))/target_left_value
-#                    print("adjust:%s, chain_rate: %s"% (adjust_rate, chain_rate[key-1]))
                     if not_satisfy_rate(adjust_rate*(bottleneck_core+more_core), chain_rate[key-1], False):
                         stop = True
                 tmp_list = tag_core([final_dict[key][min_index]], tuple([bottleneck_core-1+more_core-1]))
@@ -1371,9 +1263,6 @@ def individual_optimize_pick(module_list, bess_para, constraints):
             for sub_dup in final_dict[key]:
                 final_module.extend(sub_dup)
         final_module.sort(key=lambda l: (l.service_path_id, l.service_id))
-#        for module in final_module:
-#            print module.nf_class, module.nf_type
-        print "length of final_module",len(final_module)
         tmp_module_list = copy.deepcopy(module_list)
         tmp_module_list = tag_from_notated_list(tmp_module_list, final_module)
         bess_subgroup_list, p4_list = bfs_sort(tmp_module_list)
@@ -1387,15 +1276,10 @@ def individual_optimize_pick(module_list, bess_para, constraints):
         sum_of_left_traffic = (np.sum(left_matrix, axis=0)).tolist()
         left_matrix.append(sum_of_left_traffic)
         right_matrix.append(int(nic["nic"][int(0)]["throughput"])*1000000)
-        print "left_matrix", left_matrix
-        print "right_matrix", right_matrix
         left_matrix = np.array(left_matrix)
         right_matrix = np.array(right_matrix)
         t = maximizeMarginalRate(chain_rate, left_matrix, right_matrix)
         mr =  marginalRate(chain_rate, t)
-        print "Throughput", t
-        print "Marginal rate", mr
-        print "sum marginal rate", sum(mr)
         module_list = tag_from_notated_list(module_list, final_module)
     else:
         print "infeasible to match min_requirement"
@@ -1403,7 +1287,6 @@ def individual_optimize_pick(module_list, bess_para, constraints):
     core_num_all = []
     for module in module_list:
         core_num_all.append([module.nic_index, module.core_num])
-    print "core_num_all", core_num_all
 
 
     return chosen_pattern, core_num_all    
@@ -1420,7 +1303,6 @@ def all_p4_optimize_pick(pattern_list, module_list, bess_para):
     chain_rate = get_rate()
     total_chain_num = len(chain_rate)
     chosen_pattern = 0
-    print("length of module_list", len(module_list))
     for module in module_list:
         if module.nf_type == 2:
             module.nf_type = 0
@@ -1447,7 +1329,6 @@ def all_p4_optimize_pick(pattern_list, module_list, bess_para):
     notated_final = []
     left_matrix = []
     right_matrix = []
-    print "spare_core_num", spare_core_num , "len(unique_entries)", len(unique_entries)
     if len(unique_entries) != 0:
         each_chain_core = spare_core_num/len(unique_entries)
         for i in range(len(chain_indexes)):
@@ -1480,19 +1361,14 @@ def all_p4_optimize_pick(pattern_list, module_list, bess_para):
         left_matrix.append(sum_of_left_traffic)
         right_matrix.append(int(nic["nic"][int(0)]["throughput"])*1000000)
     
-    print("left matrix", left_matrix)
-    print("right matrix", right_matrix)
     left_matrix = np.array(left_matrix)
     right_matrix = np.array(right_matrix)
     t = maximizeMarginalRate(chain_rate, left_matrix, right_matrix)
     mr = marginalRate(chain_rate, t)
-    print "Marginal rate", mr
-    print "Sum marginal rate", sum(mr)
     notated_final.extend(p4_list)
     notated_final.sort(key=lambda l: (l.service_path_id, l.service_id))
     module_list = tag_from_notated_list(module_list, notated_final)
     core_num_all = []
-#    print("notated length", len(module_list))
     for module in module_list:
         core_num_all.append([module.nic_index, module.core_num])
 
@@ -1569,21 +1445,15 @@ def all_BESS_optimize_pick(pattern_list, module_list, bess_para, constraints):
         left_matrix.append(sum_of_left_traffic)
         right_matrix.append(int(nic["nic"][int(0)]["throughput"])*1000000)
 
-    print("left matrix", left_matrix)
-    print("right matrix", right_matrix)
     left_matrix = np.array(left_matrix)
     right_matrix = np.array(right_matrix)
     t = maximizeMarginalRate(chain_rate, left_matrix, right_matrix)
     mr = marginalRate(chain_rate, t)
-    print "Throughput", t
-    print "MarginalRate", mr
-    print "sum Marginal rate", sum(mr)
 
     notated_final.extend(p4_list)
     notated_final.sort(key=lambda l: (l.service_path_id, l.service_id))
     module_list = tag_from_notated_list(module_list, notated_final)
     core_num_all = []
-    print("notated length", len(module_list))
     for module in module_list:
         core_num_all.append([module.nic_index, module.core_num])
 
@@ -1612,32 +1482,16 @@ def E2_optimization_pick(pattern_list, module_list, bess_para):
     chain_rate = get_rate()
     total_chain_num = len(chain_rate)
     pattern_dict = []
-#    counter=0
 
     for pattern in pattern_list:
-#        pattern_binary = "{0:b}".format(pattern)
-        
-#        tmp_tuple_list = [1]*pattern_binary.count('1')
-#        ones_tuple = tuple(tmp_tuple_list)
         notated_list = copy.deepcopy(module_list)
         total_module_num = len(module_list)
-#        notated_list = notate_list(notated_list, ones_tuple, pattern)
         for module_index in range(total_module_num):
             mode_bit = (pattern>>(total_module_num - module_index-1))%2
             notated_list[module_index].nf_type = mode_bit
 
 
         bess_subgroup_list, p4_list = bfs_sort(notated_list)
-        '''
-        if pattern == 243740:
-            print "pattern_binary", pattern
-            print "length of bess_subgroup", len(bess_subgroup_list)
-            for subgroup in bess_subgroup_list:
-                print "subgroup"
-                for module in subgroup:
-                    print module.nf_class, module.nf_type
-        '''
-            
          
         for index in range(len(bess_subgroup_list)):
             subgroup = bess_subgroup_list[index]
@@ -1671,7 +1525,6 @@ def E2_optimization_pick(pattern_list, module_list, bess_para):
                 dup_matrix = [0]*len(subgroup_bottleneck)
                 dup_matrix[min_index] = each_chain_core
                 dup_tuple = tuple(dup_matrix)
-#                print each_chain_core, dup_tuple
                 categorize_dict[chain_index] = tag_core(categorize_dict[chain_index], dup_tuple)
                 for subgroup in categorize_dict[chain_index]:
                     notated_final.extend(subgroup)
@@ -1697,7 +1550,6 @@ def E2_optimization_pick(pattern_list, module_list, bess_para):
         notated_final.extend(p4_list)
         notated_final.sort(key=lambda l: (l.service_path_id, l.service_id))
         core_num_all = []
-#        print pattern
         for module in notated_final:
             if module.nf_type == 0:
                 assert module.nic_index == -1
@@ -1705,78 +1557,34 @@ def E2_optimization_pick(pattern_list, module_list, bess_para):
                 assert module.nic_index == 0
             core_num_all.append([module.nic_index, module.core_num])
         pattern_dict.append([pattern, core_num_all, mr, -subgroup_count])
-#        print("length of subgroup list", len(bess_subgroup_list))
 
     all_pattern_dict_order = sorted(pattern_dict, key=itemgetter(-1, -2), reverse=True)   
-    print "bounce_num:" , all_pattern_dict_order[0][-1]
     chosen_pattern = all_pattern_dict_order[0][0]
     module_info  = all_pattern_dict_order[0][1]
-#    print "all_pattern_dict_order", all_pattern_dict_order[0]
-    print ("Marginal rate: ", all_pattern_dict_order[0][-2])
-    print "sum Marginal", sum(all_pattern_dict_order[0][-2])
-    print "module_info", module_info
-    print "chosen_pattern", chosen_pattern
 
     return chosen_pattern, module_info
 
 def heuristic_core_allocation(module_list):
     
     pattern_list = enum_case(module_list)
-#    print(pattern_list)
     bess_dict_para, constraints = read_para()
 
     all_chain_pattern_dict = speed_up_calc_cycle(pattern_list, module_list, bess_dict_para, constraints)
     
     return all_chain_pattern_dict, bess_dict_para
     
-    
-
-'''
-    nic = get_nic_info()
-    avail_nic_num = len(nic["nic"])
-    module_list = tag_chain_index(module_list)
-    weight_dict = generate_weight(module_list)
-    module_list = tag_weight(module_list, weight_dict)
-
-    chain_rate = get_rate()
-    total_chain_num = len(chain_rate)
-    spare_core = int(nic["nic"][0]["core"])-RESERVE_CORE
-    usable_core = spare_core
-
-    notate_module_list = copy.deepcopy(module_list)
-    chain_module_list, _ = segment_module_list(notate_module_list)
-    total_chain_num = len(chain_module_list)
-
-    final_module = []
-    infeasible = False
-
-    for chain_index in range(total_chain_num):
-        chain_bess, chain_p4 = bfs_sort(copy.deepcopy(chain_module_list[chain_index]))
-        if len(chain_bess) == 0:
-            final_module.extend(chain_p4)
-            chain_success = True
-        else:
-            for i in range(len(chain_bess)):
-                subgroup = chain_bess[i]
-                chain_bess[i] = tag_core_index(subgroup)
-            dup_num, dup_list, no_dup_list = count_dup(0, range(len(chain_bess)), chain_bess)
-            bool_tag = []
-            for no_dup_sublist in no_dup_list:
-                left_vector, right_const = inequal_form(no_dup_sublist, len(chain_module_list), bess_para)
-                left_value = max(left_vector)
-                if (right_const/float(left_value) < chain_rate[chain_index][0]):  
-                    infeasible = True
-                else:
-                    usable_core -= 1
-            for dup_sublist in dup_list:
-                left_vector, right_const = inequal_form(dup_sublist, len(chain_module_list), bess_para)
-                left_value = max(left_vector)
-                if not_satisfy_rate(right_const/float(left_value), chain_rate[chain_index], True):
-                    used_core = math.ceil(chain_rate[chain_index][0]*float(left_value)/right_const)
-'''
-
 
 def mode_select_pattern_list(mode, module_list):
+    """ Enumerate all possible placement for each mode
+    
+    Parameter:
+    mode: chosen algorithm number
+    module_list: all NF modules
+
+    Returns:
+    pattern_list: all possible placement
+
+    """
     pattern_list = []
     if mode == 3:
         node_total = len(module_list)
@@ -1789,59 +1597,86 @@ def mode_select_pattern_list(mode, module_list):
         
     return pattern_list
 
-def mode_select_decision_pattern(mode, chain_enum_list, all_modules, bess_dict_para, constraints):
+def mode_select_hardware_deployment(mode, chain_enum_list, 
+                    all_modules, bess_dict_para, constraints):
+    """ Select from possible placement and run algorithm
+        to decide the best placement and core assignment
+
+    Parameter:
+    mode: chosen algorithm number
+    chain_enum_list: all possible placement
+    all_modules: all NF modules
+    bess_dict_para: a dictionary of bess module name and 
+                    profiled cycles
+    constraints: number of available BESS cores in total
+
+    Returns:
+    chosen_pattern: selected deployment hardware decision
+    core_alloc: number of cores assigned for each BESS
+                NF instances
+    """
     chosen_pattern = -1
     core_alloc = None
+
     if mode == 0 or mode == 6:
 #        all_chain_pattern_dict = calc_cycle(chain_enum_list, all_modules, bess_dict_para, constraints)
-        all_chain_pattern_dict = speed_up_calc_cycle(chain_enum_list, all_modules, bess_dict_para, constraints)
+        all_chain_pattern_dict = speed_up_calc_cycle(chain_enum_list,\
+                             all_modules, bess_dict_para, constraints)
         chosen_pattern, core_alloc, _ = optimize_pick(all_chain_pattern_dict)
     elif mode == 1:
-        chosen_pattern, core_alloc = no_profile_optimize_pick(chain_enum_list, all_modules, bess_dict_para, constraints)
+        chosen_pattern, core_alloc = no_profile_optimize_pick(chain_enum_list,\
+                                     all_modules, bess_dict_para, constraints)
     elif mode == 2:
-        chosen_pattern, core_alloc = individual_optimize_pick( all_modules, bess_dict_para, constraints)
+        chosen_pattern, core_alloc = individual_optimize_pick( all_modules, \
+                                                bess_dict_para, constraints)
     elif mode == 3:
-        chosen_pattern, core_alloc = all_p4_optimize_pick(chain_enum_list, all_modules, bess_dict_para)
+        chosen_pattern, core_alloc = all_p4_optimize_pick(chain_enum_list, \
+                                                all_modules, bess_dict_para)
     elif mode == 4:
-        all_chain_pattern_dict = no_core_op_calc_cycle(chain_enum_list, all_modules, bess_dict_para)
+        all_chain_pattern_dict = no_core_op_calc_cycle(chain_enum_list, \
+                                                all_modules, bess_dict_para)
         chosen_pattern, core_alloc = optimize_pick(all_chain_pattern_dict)
     elif mode == 5:
-        chosen_pattern, core_alloc = E2_optimization_pick(chain_enum_list, all_modules, bess_dict_para)
+        chosen_pattern, core_alloc = E2_optimization_pick(chain_enum_list, \
+                                                all_modules, bess_dict_para)
     elif mode == 7:
-        chosen_pattern, core_alloc = all_BESS_optimize_pick(chain_enum_list, all_modules, bess_dict_para, constraints)
+        chosen_pattern, core_alloc = all_BESS_optimize_pick(chain_enum_list, \
+                                    all_modules, bess_dict_para, constraints)
         
     return chosen_pattern, core_alloc
 
-def place_decision(nfcp_parser, enumerate_bool, op_mode):
-    bess_dict_para = {}
-    constraints = {}
-    decision_pattern = None
-    all_modules = []
-    chain_enum_list = None
-    modules = []
-    """
-    for flowspec_name, nfchain_name in nfcp_parser.scanner.flowspec_nfchain_mapping.items():
-        chain_ll_node = nfcp_parser.scanner.struct_nlinkedlist_dict[nfchain_name]
-        nf_graph_chain = convert_nf_graph(chain_ll_node)
-        chain_modules = nf_graph_chain.list_modules()
-        modules.extend(chain_modules)
-        print "length of each chain", len(chain_modules)
-    """
+def place_decision(lemur_parser, next_best_flag, op_mode):
+    """ Run chosen algorithm to assign deploymenet hardware
+
+    Parameter:
+    lemur_parser: DAG parser
+    next_best_flag: flagged to chose next best placement
+    op_mode: chosen algorithm
+
+    Returns:
+    all_modules: all marked NFs with assigned deployment info
     
-    nf_graph = convert_global_nf_graph(nfcp_parser.scanner)
+    """
+    decision_pattern = None
+    bess_cycle_profile_dict = {}
+    constraints = {}
+    all_modules = []
+    modules = []
+    
+    nf_graph = convert_global_nf_graph(lemur_parser.scanner)
     modules = nf_graph.list_modules()
     modules.sort(key=lambda l: (l.service_path_id, l.service_id))
-#    for module in modules:
-#        print ("module %s, spi: %d, si: %d, nf_type %d, core_num: %s, nic_index: %d, bounce: %r, merge: %r, core_index: %d", \
-#            module.nf_class, module.service_path_id, module.service_id, module.nf_type, module.core_num, module.nic_index,  module.bounce, module.merge, module.core_index)
+    bess_cycle_profile_dict, constraints = read_para()
 
-    if not enumerate_bool:
-        bess_dict_para, constraints = read_para()
+    if not next_best_flag:
         chain_enum_list = mode_select_pattern_list(op_mode, modules)
-        decision_pattern, core_alloc = mode_select_decision_pattern(op_mode, chain_enum_list, modules, bess_dict_para, constraints)
+        decision_pattern, core_alloc = mode_select_hardware_deployment(op_mode, \
+                chain_enum_list, modules, bess_cycle_profile_dict, constraints)
     else:
         decision_pattern, core_alloc = next_optimize_pick()
-    all_modules = apply_pattern(modules, decision_pattern, core_alloc, bess_dict_para)
+
+    all_modules = apply_pattern(modules, decision_pattern, core_alloc, \
+                                bess_cycle_profile_dict)
     if all_modules:
         log_module(all_modules)
     else:
