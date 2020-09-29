@@ -4,6 +4,10 @@
 * The UDLemurUserListener (scanner) encapsulates a language lexer,
 * parser, and stores NF chains in a AST tree (the scanner can scan the AST).
 *
+* The user-level config file specifies NF chains and looks like:
+*                   ACL -> SilkRoad -> Ipv4Forward
+* (The above chain has 3 NFs, i.e. ACL, SilkRoad, and Ipv4Forward)
+*
 * AST-related functions are more language-orientated, and less useful
 * to Lemur's compiler. This is a shim-layer that refines NF-chain info
 * and passes it to the compiler.

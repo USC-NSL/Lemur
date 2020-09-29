@@ -1,22 +1,27 @@
-
 """
-* Title: nfcp_compiler.py
-* Description:
-* The script is used to process a NFCP user-level configuration script and generate the corresponding P4 code.
-* It will:
-* (1) call "nfcp_chain_parser" / "nfcp_user_level_parser"
-* Goal: analyze the user-input configuration file. 
-* Generate data structs that are useful when generating P4 and BESS code.
+* This script has the main function of Lemur compiler. Lemur compiler
+* parses user-defined NF chains and profiling inputs, and runs an
+* optimizer that decides the placement of each NF across available
+* hardware platforms. Finally, it generates code and scripts to run NFs.
 *
-* (2) call "library_parser_naive" or similar things
-* Goal: analyze each P4 NF node. Store the necessary information in the NF node data structure
+* It will:
+* (1) call "lemur_user_level_parser"
+* Goal: analyze an user-input config file.
+* It parses the file and stores NF-chain info in data structs that can be
+* used in the rest components.
+*
+* (2) call "library_parser_naive"
+* Goal: analyze each P4 NF node.
+* It parses all P4 modules, and stores module information as NF nodes in
+* nf_node objects.
 *
 * (3) call "library_combiner" or similar things
-* Goal: merge all P4 libraries together. Generate the glue code to make the NF chain running
-* 
-* (4) call "p4_code_generator" 
-* Goal: generate P4 code and output it
+* Goal: merge all P4 libraries together. 
+* It generates the code that unifies NF chains deployed at each hardware
+* platform (P4, BESS, smartNICs and so on).
 *
+* (4) call "p4/bess_code_generator" 
+* They generate the final code and scripts
 """
 
 from __future__ import print_function
@@ -25,16 +30,15 @@ import subprocess
 import collections
 import argparse
 import logging
-import nfcp_user_level_parser as configParser
+import lemur_user_level_parser as configParser
 import nfcp_library_parser as libParser
-import nfcp_code_generator as codeGenerator
+import lemur_code_generator as codeGenerator
 import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
 import new_bess_generator as BG
 import time
 from util.lemur_nf_node import *
-from util.nfcp_install_table_entry import NFCP_entry_helper
-from core.profile_p4 import p4_usage_checker
+from core.lemur_p4_profiler import p4_usage_checker
 import nf_placement as placeTool
 from nf_placement import log_module
 
@@ -150,6 +154,7 @@ def nfcp_compiler_main():
     # NFCP Compiler New Version (Refer: nfcp_user_level_parser.py)
     # Use the 'configParser' class to parser the NF chain configuration file
     p4_logger.info('NFCP ConfParser is running...')
+
     conf_parser = configParser.Lemur_config_parser(config_filename)
     for flowspec_name, nfchain_name in conf_parser.scanner.flowspec_nfchain_mapping.items():
         chain_ll_node = conf_parser.scanner.struct_nlinkedlist_dict[nfchain_name]
@@ -171,9 +176,8 @@ def nfcp_compiler_main():
     for idx, node in enumerate(sorted(all_nf_nodes)):
         p4_logger.info(('%s, time:%d') %(node, node.finish_time))
     conf_parser.conf_parser_show_stats(p4_logger)
-    # non-global view (it does not work with shared modules)
-    #p4_node_lists = conf_parser.conf_parser_get_p4_nodes(copy.deepcopy(all_nf_nodes))
-    # global view
+
+    # Global view of NF DAGs
     p4_node_lists = conf_parser.conf_parser_get_global_p4_nodes(copy.deepcopy(all_nf_nodes))
     default_nsh_node = nf_node()
     default_nsh_node.setup_node_from_argument('sys_default', 'SYS', 0, 0)
@@ -215,9 +219,9 @@ def nfcp_compiler_main():
         p4_logger.info("lib info: %d metadata fields" %(len(p4_node.metadata_dict)))
         p4_logger.info("lib info: %d parser states" %(len(p4_node.parser_state_list)))
         p4_logger.info("lib info: prefix=%s, %d actions, %d tables" %(p4_node.output_prefix, len(p4_node.ingress_actions), len(p4_node.ingress_tables)))
-    # return # to test P4 Library Parser
-    
-    p4_generator = codeGenerator.nfcp_code_generator(conf_parser.scanner, p4_list, p4_version)
+
+    p4_generator = codeGenerator.lemur_code_generator(conf_parser.scanner, p4_list, p4_version)
+
     print("NFCP P4 Library Combiner is running...")
     p4_generator.lib_combine_main()
     p4_generator.lib_combine_show_stats(p4_logger)
@@ -229,12 +233,11 @@ def nfcp_compiler_main():
     output_fp.close()
     print("NFCP Compiler Ends!")
     
-    
     # P4 stage estimator code example:
     checker = p4_usage_checker( './nf.p4', p4_list, 12 )
-    cker_res = checker.NFCP_check_p4_stage_usage()
+    cker_res = checker.lemur_check_p4_stage_usage()
     print('NFCP switch estimation:', checker.stage_usage, 'estimation res:', cker_res)
-    
+
     """
     if (op_mode==0 or op_mode==6) and False: # To insert entry, set the flag to True
         # The checker tells whether the target program fits into the switch or not
@@ -242,10 +245,6 @@ def nfcp_compiler_main():
         print("check stage")
         print(checker.NFCP_check_p4_stage_usage())
     """
-
-    # generate entry for tests
-    #entry_helper = NFCP_entry_helper(entry_filename, p4_list)
-    #entry_helper.NFCP_generate_table_entries()
     return
 
 

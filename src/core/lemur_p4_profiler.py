@@ -1,11 +1,8 @@
+"""
+* This script implements a p4_usage_checker that takes as input a
+* P4 file and outputs a coarse estimation for the P4 stage usage.
+"""
 
-"""
-* 
-* Title: profile_p4.py
-* Description:
-* This script is a corase estimation for the P4 stage usage.
-*
-"""
 from __future__ import print_function
 import sys
 sys.path.append('..')
@@ -14,14 +11,15 @@ import subprocess
 import collections
 import copy
 import math
-from p4_lib_parser.ingress_match_action import p4_table
 import nfcp_library_parser as libParser
-import nfcp_code_generator as codeGen
+import lemur_code_generator as codeGen
 import connect as Conn
+from p4_lib_parser.ingress_match_action import p4_table
 import p4_lib_parser.header as header
 import p4_lib_parser.header_lib as header_lib
 import util.lang_parser_helper as lang_helper
 from util.lemur_nf_node import nf_chain_graph, nf_node
+
 
 global tcam_usage_dict, sram_usage_dict
 global TCAM_BLOCK_WIDTH, TCAM_BLOCK_DEPTH
@@ -62,29 +60,30 @@ class p4_usage_checker(object):
 		self.stage_usage = 0
 
 		if p4_file_name:
-			Conn.NFCP_check_logical_table(p4_file_name)
+			Conn.lemur_check_logical_table(p4_file_name)
 		return
 
-	def NFCP_check_p4_stage_usage(self):
+	def lemur_check_p4_stage_usage(self):
 		# update stage usage for each p4 tables
-		self.NFCP_update_p4_usage()
+		self.lemur_update_p4_usage()
+
 		cwd = os.getcwd()
 		log_file = './core/table_dependengency_group.log'
-		table_groups = self.NFCP_read_graph_log(log_file)
-		self.stage_usage = self.NFCP_get_p4_stage_usage(table_groups)
+		table_groups = self.lemur_read_graph_log(log_file)
+		self.stage_usage = self.lemur_get_p4_stage_usage(table_groups)
 		if self.stage_usage > self.MAX_STAGE_NUM:
 			return False
 		else:
 			return True
 
-	def NFCP_update_p4_usage(self):
+	def lemur_update_p4_usage(self):
 		"""
-		Description: This function updates the TCAM / SRAM usage for each table in the
-		given P4 node list. The P4 list is for one placement decision.
+		This function updates the TCAM / SRAM usage for each table in
+		the given P4 node list.
 		Input: p4_list (type=List)
 		Output: None
 		"""
-		lib_combine = codeGen.nfcp_code_generator(None, self.p4_list, 'p414')
+		lib_combine = codeGen.lemur_code_generator(None, self.p4_list, 'p414')
 		lib_combine.lib_combine_main()
 		field_to_bit = {}
 		for header in lib_combine.header_list:
@@ -94,6 +93,7 @@ class p4_usage_checker(object):
 				field_to_bit['%s.%s' %(hd, field.name)] = field.bits
 		for meta, val in lib_combine.metadata_dict.items():
 			field_to_bit['meta.%s' %(meta)] = int(val)
+
 		# if you found extra header field, please add it here
 		field_to_bit['ig_intr_md.ingress_port'] = 13
 
@@ -103,14 +103,13 @@ class p4_usage_checker(object):
 					table_name = '%s_%s' %(node.action_prefix, table)
 				else:
 					table_name = '%s_%s' %(node.table_prefix, table)
-				self.NFCP_update_p4_usage_helper(table_name, node.ingress_tables[table], node, field_to_bit)
-		#print(tcam_usage_dict, sram_usage_dict)
+				self.lemur_update_p4_usage_helper(table_name, node.ingress_tables[table], node, field_to_bit)
 		return
 
-	def NFCP_update_p4_usage_helper(self, table_name, table_str, p4_node, field_to_bit):
+	def lemur_update_p4_usage_helper(self, table_name, table_str, p4_node, field_to_bit):
 		"""
-		Description: The helper function updates the TCAM/SRAM usage for each table.
-		Input: table_name (type=Str), table_str (type=Str)
+		The helper function updates the TCAM/SRAM usage for each table.
+		Input: table_name (type=str), table_str (type=str)
 		Output: None
 		"""
 		global tcam_usage_dict, sram_usage_dict
@@ -138,19 +137,21 @@ class p4_usage_checker(object):
 			elif val == 'lpm':
 				sram_usage_dict[table_name] += math.ceil((field_width/ SRAM_BLOCK_WIDTH)) * \
 					math.ceil((p4_table_obj.table_size / SRAM_BLOCK_DEPTH))
-		
-		# Uncomment this line to print stage usage
+
+		# Uncomment this following line to print stage usage
 		#print('Table %s: tcam-%d, sram-%d' %(table_name, tcam_usage_dict[table_name], sram_usage_dict[table_name]))
 		return
 
-	def NFCP_read_graph_log(self, log_file):
+	def lemur_read_graph_log(self, log_file):
 		"""
-		Description: This function reads the log_file. It parses the table dependency grouup.
+		This function reads the log_file. It reads and parses the table
+		dependency information.
+		The output is a list of table groups. Dependent P4 tables are
+		clustered and placed in the same group.
 		Input: log_file (type=Str)
 		Output: table_groups (type=List)
 		"""
 		f = open(log_file, 'r')
-		# read in table dependency information
 		table_groups = []
 		for line in f:
 			table_group = lang_helper.convert_str_to_list(line)
@@ -161,11 +162,12 @@ class p4_usage_checker(object):
 		f.close()
 		return table_groups
 
-	def NFCP_get_p4_stage_usage(self, table_groups):
+	def lemur_get_p4_stage_usage(self, table_groups):
 		"""
-		Description: This function analyzes each table group in the table group list.
-		It should sum through all tables in a table group to decide the stage usage for
-		one table group.
+		This function analyzes each table group in the table group list.
+		It considers the TCAM and SRAM resource usage for P4 tables.
+		It should sum through all tables in a table group to decide the
+		stage usage for one table group.
 		Input: table group list (type=List)
 		Output: stage_num (type=Int)
 		"""
@@ -192,20 +194,15 @@ def test_profile_p4(test_id=0):
 	os.chdir('../')
 	# test case 0: give p4 file
 	checker = p4_usage_checker('nf.p4', [], 12)
-	print(checker.NFCP_check_p4_stage_usage(), checker.stage_usage)
+	print(checker.lemur_check_p4_stage_usage(), checker.stage_usage)
 
-	return
 	# test case 1: default log file (None p4_list)
 	checker = p4_usage_checker(None, [], 12)
-	print(checker.NFCP_check_p4_stage_usage(), checker.stage_usage)
+	print(checker.lemur_check_p4_stage_usage(), checker.stage_usage)
 	
 	# test case 2: really large table usage
 	checker = p4_usage_checker('./core/sh_wo.p4', [], 12)
-	print(checker.NFCP_check_p4_stage_usage(), checker.stage_usage)
-
-	# test case 3: really large table usage
-	#checker = p4_usage_checker('../nf.p4', [], 12)
-	#print(checker.NFCP_check_p4_stage_usage(), checker.stage_usage)
+	print(checker.lemur_check_p4_stage_usage(), checker.stage_usage)
 	return
 
 if __name__ == '__main__':
