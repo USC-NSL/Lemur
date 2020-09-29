@@ -1,10 +1,13 @@
-############################################################
-# UPDATE_TTL.LIB
-# This module will decrease the ttl field in the IPv4 header by 1.
 #
-############################################################
+# Title: update_ttl.lib
+# This is a dummy P4 module that simply decreases ipv4.ttl by 1.
+#
 
 default_prefix = dummy
+
+/*
+ * P4 module marcos
+ */
 add macro(TYPE_IPV4, 0x0800)
 
 /*
@@ -22,7 +25,6 @@ add parser( Ethernet )
 
 
 # MyIngress
-
 apply {
 }
 
@@ -31,6 +33,5 @@ apply {
 /*
  * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, Ethernet]
 add deparser( deparser_seq )

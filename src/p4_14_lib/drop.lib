@@ -1,33 +1,34 @@
-############################################################
 #
-# IPV4_FORWARD.LIB
-# This will perform the basic IPV4 forwarding functions.
+# Title: drop.lib
+# This module drops all incoming packets.
+# This module is used to test the functionality of meta.drop_flag.
 #
-############################################################
 
 default_prefix = drop
 
+/*
+ * P4 module marcos
+ */
 add macro(TYPE_IPV4, 0x0800)
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
-
 #define Ethernet
 #define IPv4
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 
 
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 1, { TYPE_IPV4:IPv4 })
 set IPv4(None, 0, {})
 add parser( Ethernet )
+
 
 # MyIngress
 
@@ -59,8 +60,7 @@ apply {
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, Ethernet]
 add deparser( deparser_seq )

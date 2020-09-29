@@ -1,22 +1,26 @@
-############################################################
 #
 # Title: simple_nat.lib
-# This will perform the simple NAT functions.
+# This P4 module implements a simple NAT.
+# A NAT module is a bi-directional module that does the address
+# translation. It maps a group of internal IP-TCP hosts to a single
+# external IP-TCP host.
+# NAT needs to be aware of connections (via a flow table) because
+# it must forward all packets of a flow to the same internal host.
 #
-# Author: Jane, Jianfeng
-############################################################
 
 default_prefix = nat
 
+/*
+ * P4 module marcos
+ */
 add macro(TYPE_NSH, 0x894F)
 add macro(TYPE_IPV4, 0x0800)
 add macro(TYPE_NSH_IPV4, 0x01)
 add macro(TYPE_TCP, 0x06)
 add macro(NAT_TABLE_SIZE, 2000)
 
-
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define IPv4
@@ -24,7 +28,7 @@ add macro(NAT_TABLE_SIZE, 2000)
 #define UDP
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 add metadata(if_index, 9)
 add metadata(is_ext_if, 1)
@@ -36,22 +40,18 @@ add metadata(tcp_dp, 16)
 add metadata(if_ipv4_addr, 32)
 add metadata(if_mac_addr, 48)
 
-
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
 set IPv4(protocol, 2, {TYPE_TCP: TCP, TYPE_UDP: UDP})
 set TCP(None, 0, {})
 set UDP(None, 0, {})
 add parser( Ethernet )
 
-
 /*
  * P4 MyIngress Part
  */
-
 action drop(){
 	modify_field(meta.drop_flag, 1);
 }
@@ -164,7 +164,5 @@ apply{
 /* Egress */
 
 /* Deparser */
-
 deparser_seq = [UDP, TCP, IPv4, Ethernet]
 add deparser(deparser_seq)
-

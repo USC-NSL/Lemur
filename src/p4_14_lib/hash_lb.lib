@@ -1,31 +1,29 @@
-
-/* 
- * The NFCP library for the Hash Load Balancer
- *
- * NFCP libraries are created by the NFCP developers.
- * To use Hash Load Balancer, specify HashLB module in the NF chaining phase
- */
+#
+# Title: hash_lb.lib
+# This P4 module implements a hash-based load balancer (HULA).
+#
 
 default_prefix = hashlb
 
+/*
+ * P4 module marcos
+ */
 add macro(BRANCH_NUM, 4)
 add macro(TYPE_IPV4, 0x0800)
 add macro(TYPE_TCP, 0x06)
 add macro(TYPE_UDP, 0x11)
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
-
 #define Ethernet
 #define IPv4
 #define TCP
 #define UDP
 
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
 set IPv4(protocol, 2, {TYPE_TCP:TCP, TYPE_UDP:UDP})
 set TCP(None, 0, {})
@@ -34,7 +32,7 @@ add parser( Ethernet )
 
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 add metadata(gate_select, 4)
 
@@ -75,14 +73,12 @@ apply {
 }
 
 /*
- * Egress Match/Action Table Part (not finished yet)
+ * Egress Match/Action Table Part
  */
 
 
 /*
  * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [UDP, TCP, IPv4, Ethernet]
 add deparser( deparser_seq )
-

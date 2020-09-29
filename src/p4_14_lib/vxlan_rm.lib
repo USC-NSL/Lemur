@@ -1,14 +1,17 @@
-############################################################
-# VXLANRM.LIB
-# This will remove vxlan header on top of original Ethernet frame.
-# VXLAN is commonly used to tunnel the traffic at VLAN Tunnel Endpoint (VTEP).
-# This code will remove outer ethernet, outer ipv4, outer udp and vxlan.
-# 
 #
-############################################################
+# P4 module name: vxlan_rm.lib
+# This P4 module is to remove vxlan header on top of original Ethernet
+# frame. VXLAN is commonly used to tunnel the traffic at VLAN Tunnel
+# Endpoint (VTEP). 
+# This implementation removes the outer ethernet, outer ipv4, outer udp
+# and vxlan.
+#
 
-default_prefix = vxlan_add
+default_prefix = vxlan_rm
 
+/*
+ * P4 module marcos
+ */
 add macro(ETHERTYPE_IPV4, 0x0800)
 add macro(ETHERTYPE_VLAN, 0x8100)
 add macro(VTEP, 0xffffffffffff)
@@ -19,7 +22,6 @@ add macro(VXLAN_PORT, 4789)
 /*
  * Header Definition Part
  */
-
 #define Ethernet
 #define VXLAN
 #define IPv4
@@ -27,8 +29,8 @@ add macro(VXLAN_PORT, 4789)
 #define TCP
 
 
-/* Metadata Definition Part
- *
+/* 
+ * Metadata Definition Part
  */
 
 
@@ -45,8 +47,6 @@ set Inner_ethernet(etherType, 1, {ETHERTYPE_IPV4: Inner_IPv4})
 add parser( Ethernet )
 
 # MyIngress
-
-
 
 action do_VXLAN_decap() {
     modify_field(ethernet.srcAddr, inner_ethernet.srcAddr);
@@ -82,11 +82,7 @@ apply {
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [Inner_Ipv4, Ethernet]
 add deparser( deparser_seq )
-
-
-

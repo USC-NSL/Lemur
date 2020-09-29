@@ -1,14 +1,17 @@
-############################################################
-# VXLANADD.LIB
-# This will add vxlan header on top of original Ethernet frame.
-# VXLAN is commonly used to tunnel the traffic at VLAN Tunnel Endpoint (VTEP).
-# This code will add outer ethernet, outer ipv4, outer udp and vxlan.
-# You can assign VTEP source and destination MAC address.
 #
-############################################################
+# Title: vxlan_add.lib
+# This P4 module is to add a vxlan header on top of original Ethernet
+# frame. VXLAN is commonly used to tunnel the traffic at VLAN Tunnel
+# Endpoint (VTEP).
+# This implementation adds outer ethernet, outer ipv4, outer udp and
+# vxlan. You can assign VTEP source and destination MAC address.
+#
 
 default_prefix = vxlan_add
 
+/*
+ * P4 module marcos
+ */
 add macro(ETHERTYPE_IPV4, 0x0800)
 add macro(ETHERTYPE_VLAN, 0x8100)
 add macro(VTEP, 0xffffffffffff)
@@ -19,13 +22,11 @@ add macro(VXLAN_PORT, 4789)
 /*
  * Header Definition Part
  */
-
 #define Ethernet
 #define VXLAN
 #define IPv4
 #define UDP
 #define TCP
-
 
 /* Metadata Definition Part
  *
@@ -45,8 +46,6 @@ set Inner_ethernet(etherType, 1, {ETHERTYPE_IPV4: Inner_IPv4})
 add parser( Ethernet )
 
 # MyIngress
-
-
 
 action do_VXLAN_encap(vni, srcPort, vte_ip_srcAddr, vte_ip_dstAddr, vte_srcAddr, vte_dstAddr) {
     add_header(inner_ethernet);
@@ -91,11 +90,7 @@ apply {
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [Inner_Ipv4, Inner_ethernet, VXLAN, UDP, IPV4, Ethernet]
 add deparser( deparser_seq )
-
-
-
