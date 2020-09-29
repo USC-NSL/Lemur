@@ -2,12 +2,12 @@ import numpy as np
 import gurobipy as gp
 
 
-# bounds = ((min_f1, max_f1), ..., (min_fk, max_fk))
-# A f <= b
-# A is a matrix and b is a column vector
-# return (throughput_f1, ... throughput_fk) > (0, ..., 0) if feasible;
-# otherwise (0, ..., 0)
 def maximizeMarginalRate(bounds, A, b, noLog=True):
+    # bounds = ((min_f1, max_f1), ..., (min_fk, max_fk))
+    # A f <= b
+    # A is a matrix and b is a column vector
+    # return (throughput_f1, ... throughput_fk) > (0, ..., 0) if feasible;
+    # otherwise (0, ..., 0)
     numFlow = len(bounds)
     (numRow, numCol) = A.shape
     assert numRow == len(b) and numCol == numFlow
@@ -54,15 +54,11 @@ def marginalRate(bounds, throughputs):
 
 
 def simpleTest():
-#    bounds = ((1, 4), (2, 3))
-    bounds= ((0000000.0, 40000000000.0), (000000000.0, 40000000000.0), (0000000.0, 40000000000.0), (0000000.0, 40000000000.0))
-#    A = np.array([[1, 0], [0, 1], [1, 1]])
-    A = np.array([[0, 1.0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1.0], [0, 0, 0, 1.0], [0.0, 1.0, 1.0, 2.0]])
-#    b = np.array([3, 10, 5])
-    b = np.array([12240000000000.0, 1020000000000.0, 1020000000000.0, 1020000000000.0, 40000000000])
+    bounds = ((1, 4), (2, 3))
+    A = np.array([[1, 0], [0, 1], [1, 1]])
+    b = np.array([3, 10, 5])
     
     t = maximizeMarginalRate(bounds, A, b)
-#    assert t[0] >= 1 and t[1] >= 2 and sum(t) == 5
     print "bounds", bounds
     print "Throughput", t
     print "MarginalRate", marginalRate(bounds, t)
