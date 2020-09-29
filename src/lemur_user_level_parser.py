@@ -1,16 +1,16 @@
-
 """
-* 
-* Title: nfcp_user_level_parser.py
-* Description:
-* This script is used to parse the NFCP user-level configuration file.
-* In fact, the parser is a class that encapsulates the language lexer, parser, and
-* other logic. Most of language-related functions are provided by the 'scanner'.
-* Other member functions help the rest of our pipeline.
-* 
-* Author: Jianfeng Wang
-* Time: 06/19/2018
-* Email: jianfenw@usc.edu
+* This file implements a set of helper functions that interacts with
+* Lemur's user-level config parser, specificly UDLemurUserListener.py.
+* The UDLemurUserListener (scanner) encapsulates a language lexer,
+* parser, and stores NF chains in a AST tree (the scanner can scan the AST).
+*
+* The user-level config file specifies NF chains and looks like:
+*                   ACL -> SilkRoad -> Ipv4Forward
+* (The above chain has 3 NFs, i.e. ACL, SilkRoad, and Ipv4Forward)
+*
+* AST-related functions are more language-orientated, and less useful
+* to Lemur's compiler. This is a shim-layer that refines NF-chain info
+* and passes it to the compiler.
 *
 """
 
@@ -20,16 +20,16 @@ import os
 import subprocess
 import collections
 import copy
-from util.nfcp_nf_node import *
+from util.lemur_nf_node import *
 from util.lang_parser_helper import *
 from antlr4 import *
-from user_level_parser.NFCPUserLexer import NFCPUserLexer
-from user_level_parser.NFCPUserParser import NFCPUserParser
-from user_level_parser.NFCPUserListener import NFCPUserListener
-from user_level_parser.UDNFCPUserListener import UDNFCPUserListener, linkedlist_node, convert_nf_graph, convert_global_nf_graph
+from user_level_parser.LemurUserLexer import LemurUserLexer
+from user_level_parser.LemurUserParser import LemurUserParser
+from user_level_parser.LemurUserListener import LemurUserListener
+from user_level_parser.UDLemurUserListener import UDLemurUserListener, linkedlist_node, convert_nf_graph, convert_global_nf_graph
 
 '''
-<NFCP script language>
+<Lemur script language>
 - Provide a Click-like module connection semantics
 - All syntactic sugars must be able to co-exist with original Python syntax.
 --------------------------------------------------------------------------------
@@ -42,10 +42,22 @@ No.		Syntax 						Semantics
 5 		a() -> instance -> b() 		Use a instance to represent a standard module
 6		traff_a : a -> b -> c 		Assign a traffic name to a network function chain
 
-* Please see NFCP language book to get more details. *
+* Please see Lemur language book (user_level_lang/LemurUser.g4) to get more
+* details.
 '''
 
-class nfcp_config_parser(object):
+class Lemur_config_parser(object):
+	""" A NF-chain parser.
+
+	This is a helper class that interacts with the language-specific
+	scanner class to parse an user-level NF-chain config file.
+
+	Attributes:
+		conf_filename: the input config file's dir
+		scanner: the scanner class (used internally)
+		total_chain_count: the number of NF chains in the config file
+		p4_list: a list of P4 modules
+	"""
 	def __init__(self, conf_filename=None):
 		self.conf_filename = None
 		self.scanner = None
@@ -63,39 +75,37 @@ class nfcp_config_parser(object):
 
 	def conf_parser_main(self, conf_filename):
 		"""
-		This function is used to parse the NFCP user-level configuration script.
-		Please refer to the NFCP user-level language book to see all details.
-		Input: filename (type=str)
-		Output: scanner (type=UDNFCPUserListener)
+		This function parses a Lemur user-level config file.
+		Please refer to Lemur's user-level language book to see details.
+		Input: filename: (type=str)
+		Output: update self.scanner (type=UDLemurUserListener)
 		"""
 		conf_input = FileStream(conf_filename)
-		lexer = NFCPUserLexer(conf_input)
+		lexer = LemurUserLexer(conf_input)
 		print("Lang Lexer: OK")
-		
+
 		stream = CommonTokenStream(lexer)
 		print("Lang Stream: OK")
-		
-		parser = NFCPUserParser(stream)
+
+		parser = LemurUserParser(stream)
 		print("Lang Parser: OK")
-		
+
 		tree = parser.total()
-		scanner = UDNFCPUserListener()
+		scanner = UDLemurUserListener()
 		walker = ParseTreeWalker()
 		walker.walk(scanner, tree)
-		print("Lang ParseTree Walker: OK") 
+		print("Lang ParseTree Walker: OK")
 		self.scanner = scanner
 		convert_global_nf_graph(self.scanner)
 		return
 
 	def conf_parser_get_all_nodes(self):
 		"""
-		Description: return all P4 and BESS nodes
-		Input: None
-		Output: a list of all nf_node
+		This function returns all NF nodes as a list.
 		"""
-
 		res_node_list = []
-		# nf_chains = [all chain's root ll_node's name]
+
+		# Note: nf_chains = [all chain's root ll_node's name]
 		nf_chains = sorted(self.scanner.flowspec_nfchain_mapping.values())
 		for chain_name in nf_chains:
 			chain_ll_node = self.scanner.struct_nlinkedlist_dict[chain_name]
@@ -106,7 +116,7 @@ class nfcp_config_parser(object):
 
 	def conf_parser_get_p4_nodes(self, placement_decision):
 		"""
-		Description: return all necessary P4 nodes (including NSHEncap)
+		This function returns all necessary P4 nodes (including NSHEncap)
 		Input: Placement decision
 		Output: a list of P4 nf_node (type=list)
 		"""
@@ -115,23 +125,18 @@ class nfcp_config_parser(object):
 
 		all_graphs = self.conf_parser_get_all_graphs(placement_decision)
 		for sp_name, sp_graph in all_graphs.items():
-			'''
-			if not sp_graph.check_shared_modules():
-				continue
-			'''
-			# sp_graph.get_p4_nodes() gives the p4_list for the service path
-			#print(len(sp_graph.get_p4_nodes()))
 			res_p4_list.append(sp_graph.get_p4_nodes())
 		return res_p4_list
 
 	def conf_parser_get_global_p4_nodes(self, placement_decision):
 		"""
-		Description: return all necessary P4 nodes in global view
+		This function returns all necessary P4 nodes in global view.
 		:type placement_decision: List[nf_node]
 		:rtype p4_node_lists: List[List[nf_node]]
 		"""
 		p4_node_lists = []
 		global_graph = convert_global_nf_graph(self.scanner)
+
 		global_graph_list = global_graph.list_modules()
 		for idx in range(len(global_graph_list)):
 			curr = global_graph_list[idx]
@@ -143,7 +148,7 @@ class nfcp_config_parser(object):
 
 	def conf_parser_show_stats(self, logger):
 		"""
-		Description: call this function to show the statistics of the final data structs
+		This function shows the statistics of the parsed NF-chain info.
 		Input: logger (type(logger)==logging.Logger)
 		Output: None
 		"""
@@ -159,8 +164,9 @@ class nfcp_config_parser(object):
 
 	def conf_parser_get_all_graphs(self, placement_decision=None):
 		"""
-		Description: return all effective NF graphs
-		Input: None
+		This function returns all effective NF DAGs.
+		If |placement_decision| is set, then attaches the decision for each NF.
+		Input: placement_decision: a list of placement decisions for each NF.
 		Output: a list of nfchain_graph (type=list)
 		"""
 		res_graphs = {}
@@ -171,14 +177,13 @@ class nfcp_config_parser(object):
 				for nf_node in res_graphs[nfchain].list_modules():
 					op_nf_node = placement_decision[placement_decision.index(nf_node)]
 					nf_node.bind_node_nf_type(op_nf_node.nf_type)
-					#print(op_nf_node, nf_node.name, nf_node in placement_decision)
 		return res_graphs
 
 
 def nf_chain_parser_example_tester(input_parser, argv=None):
-	"""
-	nf_chain_parser_tester:
-	This tester is aimed to test the user-level language parser.
+	""" Lemur's chain parser tester.
+
+	This tester tests the user-level language parser in following aspects:
 	(1) basic data types
 	(2) structed data types
 	(3) define network functions
@@ -227,29 +232,19 @@ def nf_chain_parser_example_tester(input_parser, argv=None):
 
 	print("# 11 Statistics:")
 	print('Total # of service paths:', scanner.service_path_count)
-	#print scanner.overall_nf_chain_list
-	print("NFCP User-Level Parser Finished!")
 
-	#p4_list, bess_list = nf_chain_get_nf_node_list(scanner)
+	print("Lemur User-Level Parser Finished!")
 	return
-
 
 def nf_chain_parser_tester(argv):
 	print("NF Chain Parser begins:")
 	print("List all user-level configuration scripts:")
+
 	subprocess.call(['ls', './user_level_examples'])
-	#config_filename = raw_input("Please input the NF chain configuration filename:\n")
-	#p4_list, bess_list = nf_chain_parser_main('./user_level_examples/'+config_filename)
-	config_filename = 'example.conf'
-	test_parser = nfcp_config_parser(config_filename)
+	test_parser = Lemur_config_parser('example.conf')
 	nf_chain_parser_example_tester(test_parser)
-	# Test whether the service_path_id and service_id are correctly set up
-	#print("# of P4 modules: %d, # of BESS modules: %d" %( len(p4_list), len(bess_list) ))
-	#for p4_node in p4_list:
-	#	print "%s: sp=%d, sidx=%d" %(p4_node.name, p4_node.service_path_id, p4_node.service_id)
 	return
 
 
 if __name__ == '__main__':
 	nf_chain_parser_tester(sys.argv)
-

@@ -1,19 +1,16 @@
-
 """
-* NFCP_CODE_GENERATOR.PY
-* The script can receive the combined lists/dicts of information from the NFCP combiner.
-* It will generate the corresponding P4 code.
+* The script implements Lemur's code generator class. The class takes as
+* input the combined lists / dicts of NF-chain info from Lemur compiler.
+* Then, it represents a P4 NF list with the abstract control flow graph,
+* and then generates the corresponding P4 code by traversing the graph.
+*
+* To generate a P4 code, there are many steps:
 * (1) use header.py to generate header code
 * (2) use my_parser.py to generate parser code
 * (3) use ingress_match_action.py to generate ingress code
 * (4) (the same for egress)
 * (5) use my_deparser.py to generate deparser code
 * (6) other pieces of code
-*
-* Author: Jianfeng Wang
-* Time: 02-27-2018
-* Email: jianfenw@usc.edu
-*
 """
 
 from __future__ import print_function
@@ -29,11 +26,11 @@ import p4_lib_parser.my_deparser as MyDeparser
 import p4_lib_parser.my_verifychecksum as MyVerifyChecksum
 import p4_lib_parser.my_computechecksum as MyComCheckSum
 import p4_lib_parser.v1_switch_main as MySwitchMain
-from user_level_parser.UDNFCPUserListener \
+from user_level_parser.UDLemurUserListener \
     import convert_nf_graph, convert_global_nf_graph
 from util.lang_parser_helper import *
-from util.nfcp_nf_node import *
-from util.nfcp_utils import *
+from util.lemur_nf_node import *
+from util.lemur_codegen_helper import *
 
 # P4 constant string literals
 p414_egress_start = '\n/************************  E G R E S S  **********************************/\n'
@@ -276,15 +273,9 @@ class control_flow_node(object):
 			self.shared_node_list.append(nf_node)
 			self.shared_node_count += 1
 		return
-	
-	"""
-	def add_nf_node_list(self, nf_node_list):
-		for nf_node in nf_node_list:
-			self.add_nf_node(nf_node)
-		return
-	"""
 
-class nfcp_code_generator(object):
+
+class lemur_code_generator(object):
 	def __init__(self, scanner, p4_list, p4_version):
 		self.scanner = copy.deepcopy(scanner)
 		self.p4_list = copy.deepcopy(p4_list)
@@ -307,14 +298,11 @@ class nfcp_code_generator(object):
 		return
 
 	def lib_parsre_main(self):
-		"""
-		TO DO: merge lib_parser to the nfcp_code_generator
-		"""
 		return
 
 	def lib_combine_main(self):
 		"""
-		Description: use 'nfcp_p4_library_combiner' to merge all P4 libraries
+		This function parses and merges all related P4 modules.
 		Input: None
 		Output: None (p4_nodes in self.p4_list are modified)
 		"""
@@ -1096,19 +1084,16 @@ class nfcp_code_generator(object):
 		return my_main.p4_code
 
 
-def nfcp_code_generator_tester():
+def lemur_code_generator_tester():
 	# MyHeader()
-	print("NFCP Code Generator is running...\n")
+	print("Lemur's Code Generator is running...\n")
+
 	print("-----   Header   -----")
 	header_list = ['Ethernet', 'IPv4', 'TCP', 'UDP']
 	metadata_dict = collections.OrderedDict()
 	metadata_dict['cpu_copy'] = 'bit<8>'
 	metadata_dict['dip_pool_version'] = 'bit<32>'
-
 	return
 
-
 if __name__ == '__main__':
-	nfcp_code_generator_tester()
-
-
+	lemur_code_generator_tester()

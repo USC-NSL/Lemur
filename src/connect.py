@@ -133,10 +133,11 @@ def NFCP_memory_feasible():
     return
 
 
-def NFCP_check_logical_table(p4_file_name, log_file=None):
+def lemur_check_logical_table(p4_file_name, log_file=None):
     """
-    Description: this function checks the minimal number of stages to fit all 
-    these logical tables into 12 stages.
+    This function computes the minimal number of stages required by
+    the P4 pipeline (p4_file_name) and checks whether it can be fit
+    in a 12-stage switch hardware.
     Input: None
     Output: Bool
     """
@@ -145,10 +146,9 @@ def NFCP_check_logical_table(p4_file_name, log_file=None):
     res_log_file = 'table_dependengency_group.log'
     if log_file!=None:
         res_log_file = log_file
-    
+
     # modify file for testing
     tofino_old, tofino_new = 'tofino/', '/root/jianfeng/tofino/'
-    #edit_file_cmd = "sed -i '' 's$%s$%s$g' %s" %(tofino_old, tofino_new, p4_file_name)
     edit_file_cmd = "sed -i'.bak' 's$%s$%s$g' %s" %(tofino_old, tofino_new, p4_file_name)
     edit_file = pexpect.spawn(edit_file_cmd)
     edit_file.read()
@@ -157,28 +157,6 @@ def NFCP_check_logical_table(p4_file_name, log_file=None):
     target_dir = '/root/jianfeng/logical'
     send_file_cmd = 'scp %s %s@%s:%s/%s' %(p4_file_name, USER_NAME,HOST, target_dir, target_file)
     subprocess.call(['scp', p4_file_name, '%s@%s:%s/%s' %(USER_NAME,HOST, target_dir, target_file)])
-
-    """
-    # use pexpect to send the file
-    send_file = pexpect.spawn(send_file_cmd)
-    conn_stage = 0
-    while True:
-        ssh_newkey = 'Are you sure you want to continue connecting'
-        expect_result = send_file.expect([pexpect.TIMEOUT, ssh_newkey, r'password:'], timeout=3)
-        if expect_result==0:
-            #raise Exception('Error: connection timeout (error code: 0)')
-            break
-        elif expect_result==1:
-            # receive the RSA key
-            send_file.sendline('yes')
-        elif expect_result==2:
-            # send the passcode
-            send_file.sendline('onl')
-            send_file.read()
-            break
-        else:
-            raise Exception('Error: Pexpect cannot connect to %s:%s' %(USER_NAME, HOST))
-    """
 
     remote = myssh(HOST, USER_NAME, 'onl')
     CMD=""
@@ -191,23 +169,8 @@ def NFCP_check_logical_table(p4_file_name, log_file=None):
     res_dir = './core/'
     res_log_cmd = 'scp %s@%s:%s/%s %s'%(USER_NAME,HOST,target_dir, res_log_file, res_dir)
     subprocess.call(['scp', '%s@%s:%s/%s' %(USER_NAME,HOST, target_dir, res_log_file), res_dir])
-    
-    """
-    res_log = pexpect.spawn(res_log_cmd)
-    while True:
-        expect_result = res_log.expect([pexpect.TIMEOUT, r'password:'], timeout=3)
-        if expect_result==0:
-            #raise Exception('Error: connection timeout (error code 0)')
-            break
-        elif expect_result==1:
-            # send the pass code
-            res_log.sendline('onl')
-            res_log.read()
-        else:
-            raise Exception('Error: Pexpect cannot connect to %s:%s' %(USER_NAME, HOST))
-    """
+
     # recover file
-    #recover_file_cmd = "sed -i '' 's$%s$%s$' %s" %(tofino_new, tofino_old, p4_file_name)
     recover_file_cmd = "sed -i'.bak' -e 's$%s$%s$' %s" %(tofino_new, tofino_old, p4_file_name)
     recover_file = pexpect.spawn(recover_file_cmd)
     recover_file.read()

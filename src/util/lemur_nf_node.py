@@ -1,15 +1,8 @@
-
 """
-* Title: nfcp_nf_node.py
-* Description:
-* This file defines the 'class nf_node' data structure. 
-* Each node represents a network function module in the network function chain graph.
-* In order to manipulate each NF ndoe, a set of methods are provided by this library.
-* 
-* Author: Jianfeng Wang
-* Time: 02/26/2018
-* Email: jianfenw@usc.edu
-*
+* This file implements the nf_node class nf_node. It is the abstract NF
+* node that represents a run-to-completion NF subchain. One or more nodes
+* form an NF chain graph. This class also provides many helper functions
+* to traverse an NF DAG and operate a node.
 """
 
 from __future__ import print_function
@@ -17,7 +10,7 @@ import copy
 import re
 
 """
-The three module lists record all P4 (p4-14 and p4-16) modules, and BESS modules.
+Three module lists record p4-14, p4-16 and BESS modules.
 """
 global bess_module_list
 global p4_module_list
@@ -26,7 +19,7 @@ global dup_avoid_list
 
 """
 The five states are used to decide where to place each NSHEncap (P4) node.
-Please check get_p4_nodes(), get_p4_nodes_helper() to see the details.
+Please check get_p4_nodes(), get_p4_nodes_helper() to see details.
 """
 global S_ROOT_STARTER
 global S_P4
@@ -108,10 +101,11 @@ S_NON_ROOT_BESS=3
 S_NON_ROOT_BESS_CONT=4
 
 class nf_chain_graph(object):
-    """
-    Description: the NF chain graph class. 
-    This class represents a single NF chain input. Each NF chain graph should match a flowspec.
-    Call convert_nf_graph(ll_node) to convert a ll_node into a NF chain graph instance.
+    """ The NF chain graph class.
+    This class represents a single NF chain input. Each NF chain graph
+    should be associated with a flowspec.
+    An nf_chain_graph can be converted from a ll_node graph by calling
+    'convert_nf_graph(ll_node)'.
     """
     def __init__(self, flowspec_instance):
         self.module_list = {}
@@ -157,12 +151,12 @@ class nf_chain_graph(object):
             return None
 
     def add_edge(self, src, dst):
-        """ Description: add a edge between two nf_node instances. 
-        If nf_node does not exist, then add the node first
+        """
+        This function add a edge between two nf_node instances. 
+        If |src| or |dst| does not exist, also add the node to the graph.
         Input: src, dst (type(src), type(dst) == nf_node)
         Output: None
         """
-        #print('add edge(%s -> %s)' %(src.name, dst.name))
         self.add_module(src)
         src = self.module_list[src.name]
         self.add_module(dst)
@@ -176,7 +170,8 @@ class nf_chain_graph(object):
         return
 
     def del_edge(self, src, dst):
-        """ Description: delete the edge between two nf_node instances.
+        """
+        This function deletes the edge between two nf_node instances.
         :type src: nf_node
         :type dst: nf_node
         :rtype: None
@@ -193,17 +188,17 @@ class nf_chain_graph(object):
             self.module_list.pop(dst.name)
 
     def list_modules(self):
-        #print('Len module list:%d, module #:%d' %(len(self.module_list), self.module_num))
         return self.module_list.values()
 
     def verify_graph(self):
         """
-        Description: verify the graph is correctly generated
+        This function verifies that an NF graph is generated correctly.
         Input: None
         Output: Bool
         """
         assert (len(self.module_list) == self.module_num)
-        # check whether children are found in self.module_list
+
+        # check whether all children can be found in self.module_list
         for nf_name, nf_node in self.module_list.items():
             for next_node in nf_node.adj_nodes:
                 if next_node not in self.module_list.values():
@@ -218,10 +213,13 @@ class nf_chain_graph(object):
 
     def check_shared_modules(self):
         """
-        Description: this function will check whether any infeasible placement of shared modules exists in the NF chain.
-        We run this algorithm for each NF chain seperately because shared modules are always legal across NF chains.
+        (Deprecated because we do not use shared modules any way.)
+        This function checks whether any infeasible placement of
+        shared modules exists in the NF chain.
+        We run this algorithm for each NF chain seperately
+        because shared modules are always legal across NF chains.
         """
-        print('NF Graph: check shared modules', self.flowspec )
+        print('NF Graph: check shared modules', self.flowspec)
         '''
         # check whether there is any loop for all P4 nodes
         print(len(self.heads))
@@ -266,6 +264,7 @@ class nf_chain_graph(object):
     def get_sp_count_helper(self, node):
         if node.service_path_id not in self.spi_list:
             self.spi_list.append(node.service_path_id)
+
         # process the next nodes
         for next_node in node.adj_nodes:
             self.get_sp_count_helper(next_node)
@@ -281,8 +280,18 @@ class nf_chain_graph(object):
 
     def get_p4_nodes_helper(self, node, prev_node_status, is_entry, layer, index):
         """
-        Description:
-        This is the helper function for the get_p4_nodes().
+        This helper function works for get_p4_nodes(). It traverses an
+        NF graph to collect P4 nodes and adds NSHEncap nodes to
+        the final list, i.e. self.p4_nodes. 
+        The final P4 list is used by the P4 code generator to further
+        generate the P4 code.
+
+        Here are basic rules:
+        (1) Add a NSHEncap module for all ingress P4 nodes;
+        (2) Add a NSHEncap module for all P4 nodes that follow a BESS node;
+        (3) Add a BPF table at a branch point where the upstream P4 node is
+        followed by several downstream P4 nodes.
+
         Input: node(type=nf_node), node_status(type=Int)
         Output: None
         """
@@ -326,6 +335,7 @@ class nf_chain_graph(object):
             target_node = nf_node()
             target_node.setup_node_from_argument('nsh_%d_%d' %(node.service_path_id, node.service_id), \
                     'NSHEncap', node.service_path_id, node.service_id)
+
         # Here we set up the NF selection and handle branching for the P4 code generation
         # (1) update next nf_node selection
         # (2) compute the control flow layer and index
@@ -377,17 +387,29 @@ class nf_chain_graph(object):
 
 
 class nf_node(object):
-    """
+    """ This class implements an abstract NF node. The |nf_type| field
+    is the placement decision of |this| node.
     Note:
     nf_type = -1 -> Invalid module
     nf_type = 0 -> P4 module; 
     nf_type = 1 -> BESS module;
     nf_type = 2 -> either P4 or BESS;
+
+    Args:
+        name: the network funciton instance's name
+        nf_class: the network function
+        nf_type: the network function's placement
+        service_path_id, service_id: the index of the NF
+        transition_condition: the BPF rules for a branching node
+        argument: NF's arguments (such as a list of ACL rules)
+        prev_nodes: a list of upstream nf_nodes
+        adj_nodes: a list of downstream nf_nodes
+        entry_flag: 1 if this node is an entry node (an ingress node or a
+        node after a BESS node)
+        control_flow_layer: the layer's index in the P4 control flow graph (tree)
+        control_flow_idx: the node's index at its control flow tree's layer
     """
     def __init__(self, ll_node=None):
-        # self.name = network function instance's name
-        # self.nf_class = network function's name
-        # self.adj_nodes = a list of nodes which has the current node as its parent
         self.name = None
         self.nf_class = None
         self.nf_type = -1
@@ -398,11 +420,7 @@ class nf_node(object):
         self.argument = None
         if ll_node != None:
             self.setup_node_from_ll_node(ll_node)
-        # connection_status:
-        # 1. self.is_parent: the node is a parent node of another node
-        # 2. self.is_child: the node is a child node of another node
-        #self.is_parent = False
-        #self.is_child = False
+
         self.prev_nodes = []
         self.adj_nodes = []
         self.next_nf_selection = []
@@ -415,6 +433,7 @@ class nf_node(object):
         self.finish_time = -1
         self.visited = 0
 
+        # other arguments used by BESS/P4 code generator
         self.core_num = 1
         self.nsh_gate = -1
         self.bpf_gate = -1
@@ -469,8 +488,8 @@ class nf_node(object):
 
     def setup_node_from_nf_node(self, nf_node):
         """
-        Description: create a standalone copy of the target_node. The new node
-        does not have transition_condition. It also has empty adj_nodes.
+        This function creates a standalone copy of the target_node.
+        The new node also has the same transition_condition.
         """
         self.name = nf_node.name
         self.nf_class = nf_node.nf_class
@@ -482,8 +501,8 @@ class nf_node(object):
         return
 
     def update_shared_module(self, nf_node):
-        """
-        Description: this function updates the spi/si values for a shared NF module.
+        """ (Deprecated because we do not use shared modules.)
+        This function updates the spi/si values for a shared NF module.
         """
         if (nf_node.service_path_id, nf_node.service_id) not in self.shared_spi_list:
             self.shared_spi_list.append((nf_node.service_path_id, nf_node.service_id))
@@ -491,8 +510,7 @@ class nf_node(object):
 
     def setup_node_nf_type(self):
         """
-        Description:
-        This function will return:
+        This function decides the possible placement choices of this NF:
         -1, if the module is invalid;
         0, if the module is a P4 module;
         1, if the module is a BESS module;
@@ -598,9 +616,8 @@ class nf_node(object):
 
     def get_nf_node_list(self):
         """
-        get_nf_node_list:
-        This function returns a list of nf_node. The list includes all nodes in 
-        the branch, starting from the current nf_node.
+        This function returns a list of nf_node. The list includes all nodes
+        in the branch, starting from the current nf_node.
         """
         res_nf_nodes = []
         res_nf_nodes.append(self)
@@ -618,28 +635,28 @@ class nf_node(object):
 
     def nf_node_store_header(self, input_header_list):
         """
-        This function will store all headers in the list named self.headers
+        This function stores all headers in the list named self.headers
         """
         self.header_list = copy.deepcopy(input_header_list)
         return
 
     def nf_node_store_metadata(self, input_header_dict):
         """
-        This function will store all headers in the list named self.headers
+        This function stores all headers in the list named self.headers
         """
         self.metadata_dict = copy.deepcopy(input_header_dict)
         return
 
     def nf_node_store_parser_state(self, input_state_list):
         """
-        This function will store all parser states in the list named self.parser_states
+        This function stores all parser states in the list named self.parser_states
         """
         self.parser_state_list = copy.deepcopy(input_state_list)
         return
 
     def nf_node_store_ingress_code(self, default_prefix, field_list, field_list_calc, actions, tables, apply_rules):
         """
-        This function will store actions, tables, apply rules in the OrderedDict()
+        This function stores actions, tables, apply rules in the OrderedDict()
         Also, default_prefix is stored as self.output_prefix
         """
         self.output_prefix = copy.deepcopy(default_prefix)
@@ -682,9 +699,8 @@ class nf_node(object):
 
 def nfcp_nf_chain_length(p4_list):
     """
-    nfcp_nf_chain_length(...):
     The function returns the length of each NF service chain in terms of the
-    # of P4 nodes.
+    number of P4 nodes.
     Input: p4_list (type=list)
     Output: length (type=int)
     """
@@ -701,12 +717,7 @@ def nfcp_nf_chain_length(p4_list):
 
 def nfcp_get_bess_module_name(module_name):
     """
-    nfcp_get_bess_module_name:
     The function removes the brackets and returns the BESS NF's name
     """
     res = re.match(r"(.*)\((.*)\)", module_name, re.M|re.I)
     return bess_module
-
-
-
-

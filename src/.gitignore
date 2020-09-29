@@ -1,0 +1,9 @@
+
+# Do not upload intermediate files.
+_pipeline.txt
+pattern.txt
+
+# Do not upload final outputs.
+*.bess
+*.p4
+*.p4.bak

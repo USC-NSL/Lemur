@@ -1,11 +1,6 @@
 """
-* 
-* UDLemurUserListener.PY - 
-* This script is used to parse the Lemur user-level configuration file.
-* 
-* Author: Jianfeng Wang
-* Time: 01-19-2017
-* Email: jianfenw@usc.edu
+*
+* This script parses the Lemur user-level configuration file.
 *
 """
 
@@ -78,62 +73,6 @@ class nf_chain_graph(object):
 	def __iter__(self):
 		return iter(self.module_list.values())
 
-'''
-class tmp_nf_node(object):
-	def __init__(self, ll_node=None):
-		self.name = None
-		self.nf_class = ""
-		self.spi = 0
-		self.si = 0
-		self.adj_nodes = []
-		# connection_status:
-		# 1. self.is_parent: the node is a parent node of another node
-		# 2. self.is_child: the node is a child node of another node
-		#self.is_parent = False
-		#self.is_child = False
-		if ll_node != None:
-			self.setup(ll_node)
-
-	def __cmp__(self, other_node):
-		if self.name < other_node.name:
-			return -1
-		elif self.name > other_node.name:
-			return 1
-		else:
-			if self.spi < other_node.spi:
-				return -1
-			elif self.spi == other_node.spi:
-				if self.si < other_node.si:
-					return -1
-				elif self.si == other_node.si:
-					return 0
-				else:
-					return 1
-			else:
-				return 1
-
-	def setup(self, ll_node):
-		self.name = ll_node.instance
-		self.spi = ll_node.spi
-		self.si = ll_node.si
-		return
-
-	def get_nf_node_list(self):
-		"""
-		get_nf_node_list:
-		This function returns a list of nf_node. It contains every nodes in the current
-		NF graph, starting from the current node.
-		"""
-		res_list = []
-		res_list.append(self)
-		for tmp_node in self.adj_nodes:
-			res_list += tmp_node.get_nf_node_list()
-		return res_list
-
-	def add_neighbor(self, neighbor):
-		self.adj_nodes.append(neighbor)
-		return
-'''
 
 def convert_nf_graph(ll_node):
 	"""
@@ -198,49 +137,6 @@ def convert_nf_graph(ll_node):
 		curr_ll_node = next_ll_node
 		next_ll_node = next_ll_node.next
 	return res_graph
-
-	"""
-	if len(curr_ll_node.branch) == 0:
-		# case 1: non-branch node -> branch node
-		curr_node = tmp_nf_node()
-		curr_node.setup(curr_ll_node)
-		for curr_branch in next_ll_node.branch:
-			curr_branch_root_node = convert_nf_graph(curr_branch)
-			curr_node.adj_nodes.append(curr_branch_root_node)
-		return curr_node
-	else:
-		# case 2: branch node -> non-branch node
-		next_node = tmp_nf_node()
-		next_node.setup(next_ll_node)
-		for curr_branch in curr_ll_node.branch:
-			curr_branch_root_node = None
-	"""
-
-	"""
-	while curr_ll_node != None:
-		new_node_list = curr_ll_node.get_nf_node()
-		if len(new_node_list) == 1:
-			# normal node
-			new_node = new_node_list[0][0]
-			#print(new_node.name, len(prev_node_list))
-			if root_node == None:
-				root_node = new_node
-			else:
-				for p_node in prev_node_list:
-					p_node.adj_nodes.append(new_node)
-			# set up prev_node_list
-			prev_node_list = [new_node]
-		else:
-			# branch node
-			tmp_prev_node_list = []
-			for branch_node_list in new_node_list:
-				# process one branch
-				for new_node in branch_node_list:
-
-			continue
-
-		curr_ll_node = curr_ll_node.next
-	"""
 
 
 class linkedlist_node(object):
