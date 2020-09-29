@@ -31,7 +31,7 @@ def script_template(nic):
     return bess_filename
 
 def set_bounce(module_list):
-
+    
     initial_pick = True
     for module in module_list:
         if initial_pick and module.is_bess():
@@ -175,14 +175,15 @@ def nic_pipeline(list_of_subgroup, nfcp_parser, nic_name):
                                 output_str += ("-> %s " % cur_module.adj_nodes[0].name)
                             return_str.append(output_str)
                             output_str = ""
-
+                                                                          
         return_str.append("\n")
     return_str.append("%s_pin.attach_task(wid=%d)" % (nic_name, 0))
     return_str.append("%s_queue.attach_task(wid=%d)" % (nic_name, queue_index))
 
-    return return_str
-def generate_bess(nfcp_parser, module_list):
+    return return_str       
 
+def generate_bess(nfcp_parser, module_list):
+    
     nic_info = get_nic_info()
     nic = nic_info["nic"]
     filename_list = []
@@ -208,12 +209,11 @@ def generate_bess(nfcp_parser, module_list):
 #                new_setup_pipeline(nic_subgroup_map[index], nfcp_parser, 0, 0, 0, 0, 0)
             str_list = nic_pipeline(nic_subgroup_map[index], nfcp_parser, filename_list[index].split('.')[0])
 #        print(filename_list[index])
-
+        
         fp = open(filename_list[index], 'a')
         for line in str_list:
             fp.write(line)
             fp.write('\n')
         fp.close()
-
+    
     return
-

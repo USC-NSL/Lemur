@@ -39,6 +39,8 @@ dup_avoid_list = [\
     "NAT"
 ]
 
+smartnic_module_list = ["CHACHA"]
+
 bess_module_list = ["MACSwap", \
     "ACL", \
     "AESCBC", \
@@ -54,7 +56,12 @@ bess_module_list = ["MACSwap", \
     "UrlFilter",\
     "TrafficShaper",\
     "AESCBCde",\
+    "EVPAESCBC",\
+    "EVPAESCBCde",\
+    "CHACHA",\
     "Measure",\
+    "BPF",\
+    "REDEDUP",\
     "DEDUP"]
 
 p4_module_list = {
@@ -92,7 +99,7 @@ p4_14_module_list = {
     'NSHEncap' : 'send_to_bess.lib', \
     'DROP' : 'drop.lib',\
     'Dummy': 'dummy.lib',\
-    'PktFilter' : 'pfilter.lib'}
+    'BPF' : 'pfilter.lib'}
 
 S_ROOT_STARTER=0
 S_P4=1
@@ -299,7 +306,7 @@ class nf_chain_graph(object):
                 return
         if node.is_p4():
             curr_node_status = S_P4
-        elif node.is_bess():
+        elif node.is_bess() or node.is_smartnic():
             curr_node_status = bess_transition_matrix[prev_node_status]
         else:
             error_msg = "Error: %s has a wrong nf_node type %s" %(node.name, node.nf_class)
@@ -414,6 +421,7 @@ class nf_node(object):
         self.nic_index = -1
         self.chain_index = 0
         self.optimize = False
+        self.offload = False
         self.reset = False
         self.branch_str = ''
         self.arg = None
@@ -421,6 +429,7 @@ class nf_node(object):
         self.parent_count = 0
         self.merge = False
         self.core_index = -1
+        self.time = -1
         self.weight = 0
         self.macro_list = None
         self.const_list = None
@@ -520,6 +529,21 @@ class nf_node(object):
         global dup_avoid_list
         return self.nf_class in dup_avoid_list
 
+    def get_avail_plfm(self):
+        global bess_module_list
+        global p4_module_list, p4_14_module_list
+        global smartnic_module_list
+        init_value = 0
+        if self.nf_class in smartnic_module_list:
+            init_value+=1
+        init_value = init_value<<1
+        if self.nf_class in bess_module_list:
+            init_value+=1
+        init_value = init_value<<1
+        if self.nf_class in p4_module_list or self.nf_class in p4_14_module_list:
+            init_value+=1
+        return init_value
+
     def is_shared_module(self):
         return (len(self.shared_spi_list)!=0)
 
@@ -528,6 +552,9 @@ class nf_node(object):
 
     def is_both(self):
         return self.nf_type==2
+
+    def is_smartnic(self):
+        return self.nf_type == 3
 
     def is_branched_out(self):
         return (len(self.branch_str)>0)

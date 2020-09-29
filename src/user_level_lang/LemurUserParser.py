@@ -1,4 +1,5 @@
-# Generated from NFCPUser.g4 by ANTLR 4.7.1
+# ANTRL generated file (EDIT IF YOU KNOW WHAT YOU ARE DOING)
+# Generated from LemurUser.g4 by ANTLR 4.7.1
 # encoding: utf-8
 from __future__ import print_function
 from antlr4 import *
@@ -75,9 +76,9 @@ def serializedATN():
         return buf.getvalue()
 
 
-class NFCPUserParser ( Parser ):
+class LemurUserParser ( Parser ):
 
-    grammarFileName = "NFCPUser.g4"
+    grammarFileName = "LemurUser.g4"
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -146,7 +147,7 @@ class NFCPUserParser ( Parser ):
     VARIABLENAME=19
 
     def __init__(self, input, output=sys.stdout):
-        super(NFCPUserParser, self).__init__(input, output=output)
+        super(LemurUserParser, self).__init__(input, output=output)
         self.checkVersion("4.7.1")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
@@ -156,21 +157,21 @@ class NFCPUserParser ( Parser ):
     class TotalContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.TotalContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.TotalContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def EOF(self):
-            return self.getToken(NFCPUserParser.EOF, 0)
+            return self.getToken(LemurUserParser.EOF, 0)
 
         def line(self, i=None):
             if i is None:
-                return self.getTypedRuleContexts(NFCPUserParser.LineContext)
+                return self.getTypedRuleContexts(LemurUserParser.LineContext)
             else:
-                return self.getTypedRuleContext(NFCPUserParser.LineContext,i)
+                return self.getTypedRuleContext(LemurUserParser.LineContext,i)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_total
+            return LemurUserParser.RULE_total
 
         def enterRule(self, listener):
             if hasattr(listener, "enterTotal"):
@@ -185,7 +186,7 @@ class NFCPUserParser ( Parser ):
 
     def total(self):
 
-        localctx = NFCPUserParser.TotalContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.TotalContext(self, self._ctx, self.state)
         self.enterRule(localctx, 0, self.RULE_total)
         self._la = 0 # Token type
         try:
@@ -199,11 +200,11 @@ class NFCPUserParser ( Parser ):
                 self.state = 47 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not (_la==NFCPUserParser.NEWLINE or _la==NFCPUserParser.VARIABLENAME):
+                if not (_la==LemurUserParser.NEWLINE or _la==LemurUserParser.VARIABLENAME):
                     break
 
             self.state = 49
-            self.match(NFCPUserParser.EOF)
+            self.match(LemurUserParser.EOF)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -215,58 +216,58 @@ class NFCPUserParser ( Parser ):
     class LineContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.LineContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.LineContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def NEWLINE(self):
-            return self.getToken(NFCPUserParser.NEWLINE, 0)
+            return self.getToken(LemurUserParser.NEWLINE, 0)
 
         def define_int(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_intContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_intContext,0)
 
 
         def define_float(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_floatContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_floatContext,0)
 
 
         def define_string(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_stringContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_stringContext,0)
 
 
         def define_bool(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_boolContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_boolContext,0)
 
 
         def define_nfinstance(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_nfinstanceContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_nfinstanceContext,0)
 
 
         def define_nlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_nlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_nlistContext,0)
 
 
         def define_ntuple(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_ntupleContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_ntupleContext,0)
 
 
         def define_nlinkedlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_nlinkedlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_nlinkedlistContext,0)
 
 
         def define_flowspec(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_flowspecContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_flowspecContext,0)
 
 
         def define_nfchain(self):
-            return self.getTypedRuleContext(NFCPUserParser.Define_nfchainContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Define_nfchainContext,0)
 
 
         def config_nfchain(self):
-            return self.getTypedRuleContext(NFCPUserParser.Config_nfchainContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Config_nfchainContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_line
+            return LemurUserParser.RULE_line
 
         def enterRule(self, listener):
             if hasattr(listener, "enterLine"):
@@ -281,7 +282,7 @@ class NFCPUserParser ( Parser ):
 
     def line(self):
 
-        localctx = NFCPUserParser.LineContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.LineContext(self, self._ctx, self.state)
         self.enterRule(localctx, 2, self.RULE_line)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -334,7 +335,7 @@ class NFCPUserParser ( Parser ):
 
 
             self.state = 64
-            self.match(NFCPUserParser.NEWLINE)
+            self.match(LemurUserParser.NEWLINE)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -346,17 +347,17 @@ class NFCPUserParser ( Parser ):
     class Define_intContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_intContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_intContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def INT(self):
-            return self.getToken(NFCPUserParser.INT, 0)
+            return self.getToken(LemurUserParser.INT, 0)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_int
+            return LemurUserParser.RULE_define_int
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_int"):
@@ -371,16 +372,16 @@ class NFCPUserParser ( Parser ):
 
     def define_int(self):
 
-        localctx = NFCPUserParser.Define_intContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_intContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_define_int)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 66
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 67
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 68
-            self.match(NFCPUserParser.INT)
+            self.match(LemurUserParser.INT)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -392,17 +393,17 @@ class NFCPUserParser ( Parser ):
     class Define_floatContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_floatContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_floatContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def FLOAT(self):
-            return self.getToken(NFCPUserParser.FLOAT, 0)
+            return self.getToken(LemurUserParser.FLOAT, 0)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_float
+            return LemurUserParser.RULE_define_float
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_float"):
@@ -417,16 +418,16 @@ class NFCPUserParser ( Parser ):
 
     def define_float(self):
 
-        localctx = NFCPUserParser.Define_floatContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_floatContext(self, self._ctx, self.state)
         self.enterRule(localctx, 6, self.RULE_define_float)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 70
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 71
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 72
-            self.match(NFCPUserParser.FLOAT)
+            self.match(LemurUserParser.FLOAT)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -438,17 +439,17 @@ class NFCPUserParser ( Parser ):
     class Define_stringContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_stringContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_stringContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def STRING(self):
-            return self.getToken(NFCPUserParser.STRING, 0)
+            return self.getToken(LemurUserParser.STRING, 0)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_string
+            return LemurUserParser.RULE_define_string
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_string"):
@@ -463,16 +464,16 @@ class NFCPUserParser ( Parser ):
 
     def define_string(self):
 
-        localctx = NFCPUserParser.Define_stringContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_stringContext(self, self._ctx, self.state)
         self.enterRule(localctx, 8, self.RULE_define_string)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 74
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 75
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 76
-            self.match(NFCPUserParser.STRING)
+            self.match(LemurUserParser.STRING)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -484,17 +485,17 @@ class NFCPUserParser ( Parser ):
     class Define_boolContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_boolContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_boolContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def BOOL(self):
-            return self.getToken(NFCPUserParser.BOOL, 0)
+            return self.getToken(LemurUserParser.BOOL, 0)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_bool
+            return LemurUserParser.RULE_define_bool
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_bool"):
@@ -509,16 +510,16 @@ class NFCPUserParser ( Parser ):
 
     def define_bool(self):
 
-        localctx = NFCPUserParser.Define_boolContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_boolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 10, self.RULE_define_bool)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 78
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 79
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 80
-            self.match(NFCPUserParser.BOOL)
+            self.match(LemurUserParser.BOOL)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -530,18 +531,18 @@ class NFCPUserParser ( Parser ):
     class Define_nfinstanceContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_nfinstanceContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_nfinstanceContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def netfunction(self):
-            return self.getTypedRuleContext(NFCPUserParser.NetfunctionContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NetfunctionContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_nfinstance
+            return LemurUserParser.RULE_define_nfinstance
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_nfinstance"):
@@ -556,14 +557,14 @@ class NFCPUserParser ( Parser ):
 
     def define_nfinstance(self):
 
-        localctx = NFCPUserParser.Define_nfinstanceContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_nfinstanceContext(self, self._ctx, self.state)
         self.enterRule(localctx, 12, self.RULE_define_nfinstance)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 82
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 83
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 84
             self.netfunction()
         except RecognitionException as re:
@@ -577,18 +578,18 @@ class NFCPUserParser ( Parser ):
     class Define_nlistContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_nlistContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_nlistContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def nlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlistContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_nlist
+            return LemurUserParser.RULE_define_nlist
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_nlist"):
@@ -603,14 +604,14 @@ class NFCPUserParser ( Parser ):
 
     def define_nlist(self):
 
-        localctx = NFCPUserParser.Define_nlistContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_nlistContext(self, self._ctx, self.state)
         self.enterRule(localctx, 14, self.RULE_define_nlist)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 86
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 87
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 88
             self.nlist()
         except RecognitionException as re:
@@ -624,18 +625,18 @@ class NFCPUserParser ( Parser ):
     class Define_ntupleContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_ntupleContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_ntupleContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def ntuple(self):
-            return self.getTypedRuleContext(NFCPUserParser.NtupleContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NtupleContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_ntuple
+            return LemurUserParser.RULE_define_ntuple
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_ntuple"):
@@ -650,14 +651,14 @@ class NFCPUserParser ( Parser ):
 
     def define_ntuple(self):
 
-        localctx = NFCPUserParser.Define_ntupleContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_ntupleContext(self, self._ctx, self.state)
         self.enterRule(localctx, 16, self.RULE_define_ntuple)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 90
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 91
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 92
             self.ntuple()
         except RecognitionException as re:
@@ -671,18 +672,18 @@ class NFCPUserParser ( Parser ):
     class Define_nlinkedlistContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_nlinkedlistContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_nlinkedlistContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def nlinkedlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlinkedlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlinkedlistContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_nlinkedlist
+            return LemurUserParser.RULE_define_nlinkedlist
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_nlinkedlist"):
@@ -697,14 +698,14 @@ class NFCPUserParser ( Parser ):
 
     def define_nlinkedlist(self):
 
-        localctx = NFCPUserParser.Define_nlinkedlistContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_nlinkedlistContext(self, self._ctx, self.state)
         self.enterRule(localctx, 18, self.RULE_define_nlinkedlist)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 94
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 95
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 96
             self.nlinkedlist()
         except RecognitionException as re:
@@ -718,18 +719,18 @@ class NFCPUserParser ( Parser ):
     class Define_flowspecContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_flowspecContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_flowspecContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def flowspec(self):
-            return self.getTypedRuleContext(NFCPUserParser.FlowspecContext,0)
+            return self.getTypedRuleContext(LemurUserParser.FlowspecContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_flowspec
+            return LemurUserParser.RULE_define_flowspec
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_flowspec"):
@@ -744,14 +745,14 @@ class NFCPUserParser ( Parser ):
 
     def define_flowspec(self):
 
-        localctx = NFCPUserParser.Define_flowspecContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_flowspecContext(self, self._ctx, self.state)
         self.enterRule(localctx, 20, self.RULE_define_flowspec)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 98
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 99
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 100
             self.flowspec()
         except RecognitionException as re:
@@ -765,18 +766,18 @@ class NFCPUserParser ( Parser ):
     class Define_nfchainContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Define_nfchainContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Define_nfchainContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def netfunction_chain(self):
-            return self.getTypedRuleContext(NFCPUserParser.Netfunction_chainContext,0)
+            return self.getTypedRuleContext(LemurUserParser.Netfunction_chainContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_define_nfchain
+            return LemurUserParser.RULE_define_nfchain
 
         def enterRule(self, listener):
             if hasattr(listener, "enterDefine_nfchain"):
@@ -791,14 +792,14 @@ class NFCPUserParser ( Parser ):
 
     def define_nfchain(self):
 
-        localctx = NFCPUserParser.Define_nfchainContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Define_nfchainContext(self, self._ctx, self.state)
         self.enterRule(localctx, 22, self.RULE_define_nfchain)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 102
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 103
-            self.match(NFCPUserParser.T__0)
+            self.match(LemurUserParser.T__0)
             self.state = 104
             self.netfunction_chain()
         except RecognitionException as re:
@@ -812,17 +813,17 @@ class NFCPUserParser ( Parser ):
     class Config_nfchainContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Config_nfchainContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Config_nfchainContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self, i=None):
             if i is None:
-                return self.getTokens(NFCPUserParser.VARIABLENAME)
+                return self.getTokens(LemurUserParser.VARIABLENAME)
             else:
-                return self.getToken(NFCPUserParser.VARIABLENAME, i)
+                return self.getToken(LemurUserParser.VARIABLENAME, i)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_config_nfchain
+            return LemurUserParser.RULE_config_nfchain
 
         def enterRule(self, listener):
             if hasattr(listener, "enterConfig_nfchain"):
@@ -837,16 +838,16 @@ class NFCPUserParser ( Parser ):
 
     def config_nfchain(self):
 
-        localctx = NFCPUserParser.Config_nfchainContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Config_nfchainContext(self, self._ctx, self.state)
         self.enterRule(localctx, 24, self.RULE_config_nfchain)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 106
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 107
-            self.match(NFCPUserParser.T__1)
+            self.match(LemurUserParser.T__1)
             self.state = 108
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -858,15 +859,15 @@ class NFCPUserParser ( Parser ):
     class FlowspecContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.FlowspecContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.FlowspecContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def nlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlistContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_flowspec
+            return LemurUserParser.RULE_flowspec
 
         def enterRule(self, listener):
             if hasattr(listener, "enterFlowspec"):
@@ -881,7 +882,7 @@ class NFCPUserParser ( Parser ):
 
     def flowspec(self):
 
-        localctx = NFCPUserParser.FlowspecContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.FlowspecContext(self, self._ctx, self.state)
         self.enterRule(localctx, 26, self.RULE_flowspec)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -898,15 +899,15 @@ class NFCPUserParser ( Parser ):
     class Netfunction_chainContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Netfunction_chainContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Netfunction_chainContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def nlinkedlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlinkedlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlinkedlistContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_netfunction_chain
+            return LemurUserParser.RULE_netfunction_chain
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNetfunction_chain"):
@@ -921,7 +922,7 @@ class NFCPUserParser ( Parser ):
 
     def netfunction_chain(self):
 
-        localctx = NFCPUserParser.Netfunction_chainContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Netfunction_chainContext(self, self._ctx, self.state)
         self.enterRule(localctx, 28, self.RULE_netfunction_chain)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -938,14 +939,14 @@ class NFCPUserParser ( Parser ):
     class NetfunctionContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.NetfunctionContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.NetfunctionContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_netfunction
+            return LemurUserParser.RULE_netfunction
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNetfunction"):
@@ -960,16 +961,16 @@ class NFCPUserParser ( Parser ):
 
     def netfunction(self):
 
-        localctx = NFCPUserParser.NetfunctionContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.NetfunctionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 30, self.RULE_netfunction)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 114
-            self.match(NFCPUserParser.VARIABLENAME)
+            self.match(LemurUserParser.VARIABLENAME)
             self.state = 115
-            self.match(NFCPUserParser.T__2)
+            self.match(LemurUserParser.T__2)
             self.state = 116
-            self.match(NFCPUserParser.T__3)
+            self.match(LemurUserParser.T__3)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -981,18 +982,18 @@ class NFCPUserParser ( Parser ):
     class NlistContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.NlistContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.NlistContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def nlist_elem(self, i=None):
             if i is None:
-                return self.getTypedRuleContexts(NFCPUserParser.Nlist_elemContext)
+                return self.getTypedRuleContexts(LemurUserParser.Nlist_elemContext)
             else:
-                return self.getTypedRuleContext(NFCPUserParser.Nlist_elemContext,i)
+                return self.getTypedRuleContext(LemurUserParser.Nlist_elemContext,i)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_nlist
+            return LemurUserParser.RULE_nlist
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNlist"):
@@ -1007,22 +1008,22 @@ class NFCPUserParser ( Parser ):
 
     def nlist(self):
 
-        localctx = NFCPUserParser.NlistContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.NlistContext(self, self._ctx, self.state)
         self.enterRule(localctx, 32, self.RULE_nlist)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 118
-            self.match(NFCPUserParser.T__4)
+            self.match(LemurUserParser.T__4)
 
             self.state = 119
             self.nlist_elem()
             self.state = 124
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==NFCPUserParser.T__5:
+            while _la==LemurUserParser.T__5:
                 self.state = 120
-                self.match(NFCPUserParser.T__5)
+                self.match(LemurUserParser.T__5)
                 self.state = 121
                 self.nlist_elem()
                 self.state = 126
@@ -1030,7 +1031,7 @@ class NFCPUserParser ( Parser ):
                 _la = self._input.LA(1)
 
             self.state = 127
-            self.match(NFCPUserParser.T__6)
+            self.match(LemurUserParser.T__6)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -1042,27 +1043,27 @@ class NFCPUserParser ( Parser ):
     class Nlist_elemContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Nlist_elemContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Nlist_elemContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def ntuple(self):
-            return self.getTypedRuleContext(NFCPUserParser.NtupleContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NtupleContext,0)
 
 
         def INT(self):
-            return self.getToken(NFCPUserParser.INT, 0)
+            return self.getToken(LemurUserParser.INT, 0)
 
         def FLOAT(self):
-            return self.getToken(NFCPUserParser.FLOAT, 0)
+            return self.getToken(LemurUserParser.FLOAT, 0)
 
         def STRING(self):
-            return self.getToken(NFCPUserParser.STRING, 0)
+            return self.getToken(LemurUserParser.STRING, 0)
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_nlist_elem
+            return LemurUserParser.RULE_nlist_elem
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNlist_elem"):
@@ -1077,32 +1078,32 @@ class NFCPUserParser ( Parser ):
 
     def nlist_elem(self):
 
-        localctx = NFCPUserParser.Nlist_elemContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Nlist_elemContext(self, self._ctx, self.state)
         self.enterRule(localctx, 34, self.RULE_nlist_elem)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 134
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [NFCPUserParser.T__7]:
+            if token in [LemurUserParser.T__7]:
                 self.state = 129
                 self.ntuple()
                 pass
-            elif token in [NFCPUserParser.INT]:
+            elif token in [LemurUserParser.INT]:
                 self.state = 130
-                self.match(NFCPUserParser.INT)
+                self.match(LemurUserParser.INT)
                 pass
-            elif token in [NFCPUserParser.FLOAT]:
+            elif token in [LemurUserParser.FLOAT]:
                 self.state = 131
-                self.match(NFCPUserParser.FLOAT)
+                self.match(LemurUserParser.FLOAT)
                 pass
-            elif token in [NFCPUserParser.STRING]:
+            elif token in [LemurUserParser.STRING]:
                 self.state = 132
-                self.match(NFCPUserParser.STRING)
+                self.match(LemurUserParser.STRING)
                 pass
-            elif token in [NFCPUserParser.VARIABLENAME]:
+            elif token in [LemurUserParser.VARIABLENAME]:
                 self.state = 133
-                self.match(NFCPUserParser.VARIABLENAME)
+                self.match(LemurUserParser.VARIABLENAME)
                 pass
             else:
                 raise NoViableAltException(self)
@@ -1118,18 +1119,18 @@ class NFCPUserParser ( Parser ):
     class NtupleContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.NtupleContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.NtupleContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def ntuple_elem(self, i=None):
             if i is None:
-                return self.getTypedRuleContexts(NFCPUserParser.Ntuple_elemContext)
+                return self.getTypedRuleContexts(LemurUserParser.Ntuple_elemContext)
             else:
-                return self.getTypedRuleContext(NFCPUserParser.Ntuple_elemContext,i)
+                return self.getTypedRuleContext(LemurUserParser.Ntuple_elemContext,i)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_ntuple
+            return LemurUserParser.RULE_ntuple
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNtuple"):
@@ -1144,22 +1145,22 @@ class NFCPUserParser ( Parser ):
 
     def ntuple(self):
 
-        localctx = NFCPUserParser.NtupleContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.NtupleContext(self, self._ctx, self.state)
         self.enterRule(localctx, 36, self.RULE_ntuple)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 136
-            self.match(NFCPUserParser.T__7)
+            self.match(LemurUserParser.T__7)
 
             self.state = 137
             self.ntuple_elem()
             self.state = 142
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==NFCPUserParser.T__5:
+            while _la==LemurUserParser.T__5:
                 self.state = 138
-                self.match(NFCPUserParser.T__5)
+                self.match(LemurUserParser.T__5)
                 self.state = 139
                 self.ntuple_elem()
                 self.state = 144
@@ -1167,7 +1168,7 @@ class NFCPUserParser ( Parser ):
                 _la = self._input.LA(1)
 
             self.state = 145
-            self.match(NFCPUserParser.T__8)
+            self.match(LemurUserParser.T__8)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -1179,34 +1180,34 @@ class NFCPUserParser ( Parser ):
     class Ntuple_elemContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Ntuple_elemContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Ntuple_elemContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def STRING(self, i=None):
             if i is None:
-                return self.getTokens(NFCPUserParser.STRING)
+                return self.getTokens(LemurUserParser.STRING)
             else:
-                return self.getToken(NFCPUserParser.STRING, i)
+                return self.getToken(LemurUserParser.STRING, i)
 
         def INT(self):
-            return self.getToken(NFCPUserParser.INT, 0)
+            return self.getToken(LemurUserParser.INT, 0)
 
         def FLOAT(self):
-            return self.getToken(NFCPUserParser.FLOAT, 0)
+            return self.getToken(LemurUserParser.FLOAT, 0)
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def nlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlistContext,0)
 
 
         def nlinkedlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlinkedlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlinkedlistContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_ntuple_elem
+            return LemurUserParser.RULE_ntuple_elem
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNtuple_elem"):
@@ -1221,35 +1222,35 @@ class NFCPUserParser ( Parser ):
 
     def ntuple_elem(self):
 
-        localctx = NFCPUserParser.Ntuple_elemContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Ntuple_elemContext(self, self._ctx, self.state)
         self.enterRule(localctx, 38, self.RULE_ntuple_elem)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 147
-            self.match(NFCPUserParser.STRING)
+            self.match(LemurUserParser.STRING)
             self.state = 148
-            self.match(NFCPUserParser.T__1)
+            self.match(LemurUserParser.T__1)
             self.state = 155
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,5,self._ctx)
             if la_ == 1:
                 self.state = 149
-                self.match(NFCPUserParser.STRING)
+                self.match(LemurUserParser.STRING)
                 pass
 
             elif la_ == 2:
                 self.state = 150
-                self.match(NFCPUserParser.INT)
+                self.match(LemurUserParser.INT)
                 pass
 
             elif la_ == 3:
                 self.state = 151
-                self.match(NFCPUserParser.FLOAT)
+                self.match(LemurUserParser.FLOAT)
                 pass
 
             elif la_ == 4:
                 self.state = 152
-                self.match(NFCPUserParser.VARIABLENAME)
+                self.match(LemurUserParser.VARIABLENAME)
                 pass
 
             elif la_ == 5:
@@ -1274,18 +1275,18 @@ class NFCPUserParser ( Parser ):
     class NlinkedlistContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.NlinkedlistContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.NlinkedlistContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def nlinkedlist_elem(self, i=None):
             if i is None:
-                return self.getTypedRuleContexts(NFCPUserParser.Nlinkedlist_elemContext)
+                return self.getTypedRuleContexts(LemurUserParser.Nlinkedlist_elemContext)
             else:
-                return self.getTypedRuleContext(NFCPUserParser.Nlinkedlist_elemContext,i)
+                return self.getTypedRuleContext(LemurUserParser.Nlinkedlist_elemContext,i)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_nlinkedlist
+            return LemurUserParser.RULE_nlinkedlist
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNlinkedlist"):
@@ -1300,7 +1301,7 @@ class NFCPUserParser ( Parser ):
 
     def nlinkedlist(self):
 
-        localctx = NFCPUserParser.NlinkedlistContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.NlinkedlistContext(self, self._ctx, self.state)
         self.enterRule(localctx, 40, self.RULE_nlinkedlist)
         self._la = 0 # Token type
         try:
@@ -1310,9 +1311,9 @@ class NFCPUserParser ( Parser ):
             self.state = 162
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==NFCPUserParser.T__9:
+            while _la==LemurUserParser.T__9:
                 self.state = 158
-                self.match(NFCPUserParser.T__9)
+                self.match(LemurUserParser.T__9)
                 self.state = 159
                 self.nlinkedlist_elem()
                 self.state = 164
@@ -1330,22 +1331,22 @@ class NFCPUserParser ( Parser ):
     class Nlinkedlist_elemContext(ParserRuleContext):
 
         def __init__(self, parser, parent=None, invokingState=-1):
-            super(NFCPUserParser.Nlinkedlist_elemContext, self).__init__(parent, invokingState)
+            super(LemurUserParser.Nlinkedlist_elemContext, self).__init__(parent, invokingState)
             self.parser = parser
 
         def netfunction(self):
-            return self.getTypedRuleContext(NFCPUserParser.NetfunctionContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NetfunctionContext,0)
 
 
         def VARIABLENAME(self):
-            return self.getToken(NFCPUserParser.VARIABLENAME, 0)
+            return self.getToken(LemurUserParser.VARIABLENAME, 0)
 
         def nlist(self):
-            return self.getTypedRuleContext(NFCPUserParser.NlistContext,0)
+            return self.getTypedRuleContext(LemurUserParser.NlistContext,0)
 
 
         def getRuleIndex(self):
-            return NFCPUserParser.RULE_nlinkedlist_elem
+            return LemurUserParser.RULE_nlinkedlist_elem
 
         def enterRule(self, listener):
             if hasattr(listener, "enterNlinkedlist_elem"):
@@ -1360,7 +1361,7 @@ class NFCPUserParser ( Parser ):
 
     def nlinkedlist_elem(self):
 
-        localctx = NFCPUserParser.Nlinkedlist_elemContext(self, self._ctx, self.state)
+        localctx = LemurUserParser.Nlinkedlist_elemContext(self, self._ctx, self.state)
         self.enterRule(localctx, 42, self.RULE_nlinkedlist_elem)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -1374,7 +1375,7 @@ class NFCPUserParser ( Parser ):
 
             elif la_ == 2:
                 self.state = 166
-                self.match(NFCPUserParser.VARIABLENAME)
+                self.match(LemurUserParser.VARIABLENAME)
                 pass
 
             elif la_ == 3:

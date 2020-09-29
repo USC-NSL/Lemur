@@ -1,0 +1,4 @@
+- hosts: all
+  tags: build-lemur
+  tasks:
+    - shell: ls -l

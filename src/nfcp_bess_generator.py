@@ -38,7 +38,8 @@ PORTIN_LINE = "pin::PortInc(port=myport) -> nsh"
 PORTOUT_LINE = "queue::Queue()->pout::PortOut(port=myport)"
 CONDITION_LIST = { \
     'dst_ip': 'dst host', 'src_ip': 'src host', \
-    'sport_tcp': 'tcp src port', 'dport_tcp': 'tcp dst port' \
+    'sport_tcp': 'tcp src port', 'dport_tcp': 'tcp dst port', \
+    'gate_select': 'gate select'
 }
 CORE_LINE = ("for i in range(16):\n\tbess.add_worker(i,i)\n")
 CORE_RESERVE_LINE = ("for i in range(2):\n\tpin.attach_task(wid=i)\nqueue.attach_task(wid=3)\n")
@@ -126,12 +127,18 @@ def filter_func(condition):
     BESS_LOGGER.info('called filter_func')
     elem = re.findall("'.*?'", str(condition))
     elem = [i.replace("'", "") for i in elem]
-    para = elem[1]
-    condition_type = CONDITION_LIST.get(elem[0])
+#    print "elem", elem
+    if len(elem)>1:
+        para = elem[1]
+        condition_type = CONDITION_LIST.get(elem[0])
+    else:
+        para = ""
+        condition_type = ""
     return "%s %s" %(condition_type, para)
 
 
-def new_branch_add(module, branch_index, pipeline_code):
+def new_branch_add(module, pipeline_code):
+#def new_branch_add(module, branch_index, pipeline_code):
     '''
     This func could be repeatedly called whenever there is a branching \
     from the input module, and it will set up BPF nodes to split traffic. \
@@ -141,19 +148,21 @@ def new_branch_add(module, branch_index, pipeline_code):
     registered for branching condition.
     '''
     #BESS_LOGGER.debug('%s called new_branch_add', instance_or_name(module))
-    branch_init = ("bpf%d::BPF()\n" % branch_index)
-    pipeline_code += ("-> bpf%d" % branch_index)
+    #branch_init = ("bpf%d::BPF()\n" % branch_index)
+    #pipeline_code += ("-> bpf%d" % branch_index)
+    #pipeline_code += ("-> %s" % module.name)
     branch_add = ''
     gate_count = 0
     for adj_node in module.adj_nodes:
         adj_node.bpf_gate = gate_count
-        adj_node.nf_node_set_branch_str("bpf%d:%d" % (branch_index, gate_count))
+        adj_node.nf_node_set_branch_str("%s:%d" % (module.name, gate_count))
+        #print adj_node.nf_class, adj_node.transition_condition 
         filter_parse = filter_func(adj_node.transition_condition)
-        line = ('bpf%d.add(filters=[{\"filter\": \"%s\", \"gate\": %d}])\n' % \
-            (branch_index, filter_parse, gate_count))
+        line = ('%s.add(filters=[{\"filter\": \"%s\", \"gate\": %d}])\n' % \
+            (module.name, filter_parse, gate_count))
         branch_add += line
         gate_count += 1
-    return branch_init, pipeline_code, branch_add, module
+    return  pipeline_code, branch_add, module
 
 def instance_or_name(module, nfcp_parser):
     '''
@@ -169,15 +178,15 @@ def instance_or_name(module, nfcp_parser):
         nfcp_parser.scanner.var_bool_dict.items()
     )
     if module.argument != None:
-        '''
+        '''    
         line = ("%s = \"%s\"" % \
             (module.argument, nfcp_parser.scanner.var_string_dict[module.argument]))
         module_arg = line
-        
-        if module.argument in combine_ls:
-            print combine_ls[module.argument]
+        print "line", line
         '''
-        module_arg = combine_ls[module.argument]
+        if module.argument in combine_ls:
+#            print combine_ls[module.argument]
+            module_arg = combine_ls[module.argument]
     if module.name.split()[0] != 'anon':
         return_str = module.name
     else:
@@ -188,14 +197,23 @@ def instance_or_name(module, nfcp_parser):
             return_str = "%s(%s)" % (module.nf_class, module_arg)
     return return_str
 
-def class_and_arg(module):
+def class_and_arg(module, nfcp_parser):
     '''
     This func output a module with its class and argument. This is mostly \
     used to declare a module instance. The input is the module.
     '''
     module_arg = ''
+    combine_ls = dict(nfcp_parser.scanner.var_string_dict.items() + \
+        nfcp_parser.scanner.var_int_dict.items() + \
+        nfcp_parser.scanner.var_float_dict.items() + \
+        nfcp_parser.scanner.var_bool_dict.items()
+    )
     if module.argument != None:
-        module_arg = module.argument
+        if module.argument in combine_ls:
+            module_arg = combine_ls[module.argument]
+        else:
+            module_arg = module.argument
+
     return "%s(%s)" % (module.nf_class, module_arg)
 
 def name_register(module, func_and_argu_list_copy):
@@ -370,7 +388,7 @@ def new_setup_pipeline(module_list, nfcp_parser, nsh_gate_count_value, branch_in
         if module.is_p4():
             if module.is_branched_out():
                 for item_1 in memory_array_1:
-                    print memory_array_1
+#                    print memory_array_1
                     push_out_str = item_1+(':%d->NSHencap(new_spi=\'%d\', new_si=\'%d\')->queue' % (module.bpf_gate, module.service_path_id, module.service_id))
                     output_code_list.append(push_out_str)
                     if item_1 in memory_array_2:
@@ -396,7 +414,7 @@ def new_setup_pipeline(module_list, nfcp_parser, nsh_gate_count_value, branch_in
             global_branch_core_num = 0
             for adj_node in module.adj_nodes:
                 if adj_node.is_bess():
-                    print 'enter here'
+#                    print 'enter here'
                     if module.is_branched_out() or len(memory_array_2)>0:
                         memory_array_2.append('nsh:%d' % adj_node.nsh_gate)
                     elif len(memory_array_1) >0:
@@ -467,7 +485,7 @@ def new_setup_pipeline(module_list, nfcp_parser, nsh_gate_count_value, branch_in
 
             elif module.is_branch_node():
             #elif len(module.adj_nodes)>1:
-                print "branch_node"
+                #print "branch_node"
                 if module.core_num == last_core_num:
                     for item in memory_array_1:
                         item += ('-> %s' % instance_or_name(module, nfcp_parser))

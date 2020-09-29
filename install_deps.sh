@@ -26,5 +26,3 @@ sudo cpan Graph:Easy
 pip install paramiko --user
 pip isntall Pexpect --user
 pip install numpy --user
-
-

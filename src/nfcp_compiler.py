@@ -17,6 +17,14 @@
 * (4) call "p4_code_generator" 
 * Goal: generate P4 code and output it
 *
+* Author: Jianfeng Wang
+* Time: 02/22/2018
+* Email: jianfenw@usc.edu
+*
+* Author: Yu-Chuan Yen
+* Time: 03/20/2018
+* Email: yeny@usc.edu
+*
 """
 
 from __future__ import print_function
@@ -31,6 +39,7 @@ import nfcp_code_generator as codeGenerator
 import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
 import new_bess_generator as BG
+import time
 from util.nfcp_nf_node import *
 from util.nfcp_install_table_entry import NFCP_entry_helper
 from core.profile_p4 import p4_usage_checker
@@ -103,6 +112,12 @@ def get_argparse():
         default=0,
         help='specify mode, 0: core_op, 1: no_profile, 2: greedy priotize one chain by another, 3: all P4, 4: no core_op, 5: E2, 6: P4 usage estimation, 7: all BESS'
     )
+
+    parser.add_argument(
+        '--of',
+        action='store_true',
+        help='Replace P4 with Openflow'
+    )
     return parser
 
 
@@ -122,6 +137,7 @@ def nfcp_compiler_main():
     arg_parser = get_argparse()
     args = arg_parser.parse_args()
     enumerate_bool = args.iter
+    of_flag = args.of
     p4_version = args.lang[0]
     op_mode = args.mode
     input_filename = args.file
@@ -149,8 +165,12 @@ def nfcp_compiler_main():
         p4_logger.info(" -flow[%s]: %s\n" %(flowspec_name, flowspec_instance))
         # Print all pipelines to the NFCP users
         print(chain_ll_node._draw_pipeline())
-
+        pipeline_fp = open(('_pipeline.txt'), 'a+')
+        pipeline_fp.write(chain_ll_node._draw_pipeline())
+        pipeline_fp.close()
+    start_time = time.time()
     all_nf_nodes = placeTool.place_decision(conf_parser, enumerate_bool, op_mode)
+    print("--- %s seconds ---" % (time.time() - start_time))
     all_nodes = all_nf_nodes
     
     p4_list = []
@@ -172,7 +192,7 @@ def nfcp_compiler_main():
         node_list.sort(cmp=lambda x,y:cmp(x.finish_time, y.finish_time), reverse=True)
         all_p4_nodes += node_list
     p4_list = copy.deepcopy(all_p4_nodes)
-    
+
     # Open BESS script
     bess_fp = open(final_bess_filename, 'w')
     BG.generate_bess(conf_parser, all_nodes)

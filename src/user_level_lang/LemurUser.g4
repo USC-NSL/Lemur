@@ -1,16 +1,14 @@
 /*
- * NFCPUser.g4
- *
- * This is the ANTLR grammar file for the NFCP user-level configuration language.
- * We aim to provide the following syntax.
- * - define NF instances
- * - define flow spec
- * - associate several flow spec(s) with a NF instance
- * - define arguments
+ * This is the ANTLR grammar file for the Lemur user-level config language.
+ * We aim to provide the syntax to enable:
+ * (1) define NF instances;
+ * (2) define flow spec;
+ * (3) associate several flow spec(s) with a NF instance;
+ * (4) define arguments;
  *
  */
 
-grammar NFCPUser ;
+grammar LemurUser ;
 
 
 /*

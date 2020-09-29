@@ -18,7 +18,7 @@ FH.setFormatter(FORMATTER)
 
 CONNECT_LOGGER.addHandler(FH)
 
-HOST="204.57.7.21"
+HOST="68.181.218.3"
 USER_NAME="root"
 
 class myssh:
@@ -80,6 +80,21 @@ def check_empty_pattern():
     if not change:
         chosen_pattern = -1
     return chosen_pattern
+
+def stage_feasible(p4_filename):
+    remote = myssh(HOST, USER_NAME, 'onl')
+    CMD=""
+    CMD+=("cd ~/bf-sde-8.2.0;")
+    CMD+=(". ./set_sde.bash;")
+    subprocess.call(['scp', p4_filename, '%s@%s:~/bf-sde-8.2.0/examples/%s.p4' % (USER_NAME, HOST, p4_filename.rsplit(".",1)[0])])
+    CMD+=("./p4_build.sh examples/%s;" % p4_filename)
+    status = remote(CMD)
+    print(type(status))
+
+    if status == 0:
+        return True
+    else:
+        return False
 
 
 def NFCP_memory_feasible():
