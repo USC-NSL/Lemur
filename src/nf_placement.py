@@ -1682,6 +1682,30 @@ def mode_select_pattern_list(mode, module_list):
         
     return pattern_list
 
+def heuristic_core_allocation(module_list):
+    """ Run brutal force routine for heuristic's 
+        core allocation
+
+    Parameter:
+    module_list: all NF modules
+
+    Returns:
+    all_chain_pattern_dict: <pattern, throughput> dictionary
+    bess_dict_para: a dictionary of BESS moduels and its profiled
+                    CPU cycles
+
+    """
+
+    pattern_list = enum_case(module_list)
+    bess_dict_para, constraints = read_para()
+
+    all_chain_pattern_dict = speed_up_calc_cycle(pattern_list, \
+                                                 module_list, \
+                                                 bess_dict_para, \
+                                                 constraints)
+
+    return all_chain_pattern_dict, bess_dict_para
+
 def mode_select_hardware_deployment(mode, chain_enum_list, 
                     all_modules, bess_dict_para, constraints):
     """ Select from possible placement and run algorithm

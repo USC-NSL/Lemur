@@ -7,17 +7,16 @@ import itertools
 import nfcp_user_level_parser as configParser
 import nfcp_library_parser as libParser
 import nfcp_code_generator as codeGenerator
-import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
 import new_bess_generator as BG
 from termcolor import colored
-from util.nfcp_nf_node import *
-import util.nfcp_nf_node as ND
+from util.lemur_nf_node import *
+import util.lemur_nf_node as ND
 from util.nfcp_install_table_entry import NFCP_entry_helper
 from core.profile_p4 import p4_usage_checker
 from connect import stage_feasible
 from nfcp_compiler import get_argparse
-from user_level_parser.UDNFCPUserListener \
+from user_level_parser.UDLemurUserListener \
     import convert_nf_graph, convert_global_nf_graph
 import nf_placement as placeTool
 from nf_placement import log_module
