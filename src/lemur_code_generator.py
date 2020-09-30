@@ -509,7 +509,7 @@ class lemur_code_generator(object):
 		Input: self.header_list
 		Output: P4 code
 		"""
-		cp = header.const_var_parser(self.macro_list, self.const_list)
+		cp = header.const_macro_parser(self.macro_list, self.const_list)
 		if self.p4_version == 'p414':
 			cp.generate_p414_code()
 		elif self.p4_version == 'p416':
