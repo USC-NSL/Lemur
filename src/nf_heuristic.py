@@ -12,8 +12,6 @@ import new_bess_generator as BG
 from termcolor import colored
 from util.lemur_nf_node import *
 import util.lemur_nf_node as ND
-from util.nfcp_install_table_entry import NFCP_entry_helper
-from core.profile_p4 import p4_usage_checker
 from connect import stage_feasible
 from nfcp_compiler import get_argparse
 from user_level_parser.UDLemurUserListener \
