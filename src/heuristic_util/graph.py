@@ -1,3 +1,7 @@
+"""
+* This file provides a graph struct to be used by Lemur compiler.
+"""
+
 from collections import defaultdict 
 import copy
 
@@ -15,7 +19,7 @@ class Graph:
         path.append(u)
 
         if u ==d:
-#            print path
+            # print path
             self.route.append(list(path))
         else:
             for i in self.graph[u]:
@@ -28,8 +32,7 @@ class Graph:
         visited =[False]*(self.V) 
         path = []
         self.printAllPathsUtil(s, d,visited, path)       
-#        print self.route
+        # print self.route
         route = list(self.route)
         self.route = []
         return route
-

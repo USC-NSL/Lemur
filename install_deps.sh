@@ -22,7 +22,7 @@ sudo apt-get install graphviz
 sudo cpan Graph:Easy
 
 # Install python lib
-# paramiko
 pip install paramiko --user
 pip isntall Pexpect --user
 pip install numpy --user
+pip install termcolor --user

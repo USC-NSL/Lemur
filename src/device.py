@@ -1,3 +1,7 @@
+"""
+* This script reads in the device information for an NF deployment.
+"""
+
 import json
 
 data = {}  
@@ -28,5 +32,6 @@ data['nic'].append({
     'driver': 'igb_uio'
 })
 '''
+
 with open('device.txt', 'w') as outfile:  
     json.dump(data, outfile)

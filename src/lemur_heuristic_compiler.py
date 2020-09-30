@@ -1,8 +1,13 @@
 """
-NF_HEURISTIC.PY
-This script executes heuristic to decide placement
-and generate corresponding codes
+* This script implements an enhanced version of Lemur compiler with
+* heuristic algorithms.
+*
+* As described in the paper, the default Lemur compiler may have
+* scalability issues to solve an optimization problem under cases
+* where the compiler needs to query the P4 compiler (p4c) for many
+* times (This is because compiliing a P4 program is really slow).
 """
+
 from __future__ import print_function
 import os
 import subprocess
@@ -18,12 +23,13 @@ from termcolor import colored
 from util.lemur_nf_node import *
 import util.lemur_nf_node as ND
 from connect import stage_feasible
-from nfcp_compiler import get_argparse
+from lemur_compiler import get_argparse
 from user_level_parser.UDLemurUserListener \
     import convert_nf_graph, convert_global_nf_graph
 import nf_placement as placeTool
 from nf_placement import log_module
 import heuristic_util.graph as G
+
 
 STATE_INIT = 0
 global CONF_LIB
@@ -84,7 +90,6 @@ def run_p4_compiler(p4_filename):
     status: compiler accepts codes or not
 
     """
-
     status = stage_feasible(p4_filename)
     return status
 
@@ -204,7 +209,6 @@ def core_allocation_for_highest_tput_derived_from_LP(module_list):
     expected_throughput: the estimated throughput for chosen placement
 
     """
-
     find_solution = False
     chosen_module_list = copy.deepcopy(module_list)
     throughput_list, bess_dict_para = placeTool.heuristic_core_allocation(module_list)
@@ -223,9 +227,6 @@ def core_allocation_for_highest_tput_derived_from_LP(module_list):
     return find_solution, chosen_module_list, expected_throughput
 
 def least_change(throughput_dict):
-    """
-    """
-
     key = 0
     index = 0
     change_min = 10000000000000

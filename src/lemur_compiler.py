@@ -78,7 +78,8 @@ traverse_time = 0
 
 def get_argparse():
     """
-    Description: generate the argument parser to read command line inputs
+    This function generates a argument parser for Lemur compiler.
+    Lemur compiler runs in different modes.
     Input: None
     Output: argparser
     """
@@ -116,7 +117,7 @@ def get_argparse():
     return parser
 
 
-def nfcp_compiler_main():
+def lemur_compiler_main():
     """
     The main function for the NFCP compiler. It follows these steps:
     (1) user-level NF chain parser
@@ -142,7 +143,7 @@ def nfcp_compiler_main():
     print("Compiling file: %s" % input_filename)
     config_filename = './user_level_examples/'+input_filename+'.conf'
     #config_filename = './user_level_examples/'+raw_input("Please input the NF chain configuration filename: ")
-    #config_filename = './user_level_examples/'+'test_sharedmods.conf'
+
     entry_filename = input_filename
     p4_code_name = "nf"
     final_p4_filename = os.path.join(OUTPUT_DIR, p4_code_name.strip() + ".p4")
@@ -150,25 +151,26 @@ def nfcp_compiler_main():
     output_fp = open(final_p4_filename, 'w')
     output_fp.write("\n")
 
-    # NFCP Compiler New Version (Refer: nfcp_user_level_parser.py)
-    # Use the 'configParser' class to parser the NF chain configuration file
+    # Lemur compiler runs the user-level parser to read in NF chains.
     p4_logger.info('NFCP ConfParser is running...')
-
     conf_parser = configParser.Lemur_config_parser(config_filename)
+
     for flowspec_name, nfchain_name in conf_parser.scanner.flowspec_nfchain_mapping.items():
         chain_ll_node = conf_parser.scanner.struct_nlinkedlist_dict[nfchain_name]
         flowspec_instance = conf_parser.scanner.struct_nlist_dict[flowspec_name]
         p4_logger.info(" -flow[%s]: %s\n" %(flowspec_name, flowspec_instance))
+
         # Print all pipelines to the NFCP users
         print(chain_ll_node._draw_pipeline())
         pipeline_fp = open(('_pipeline.txt'), 'a+')
         pipeline_fp.write(chain_ll_node._draw_pipeline())
         pipeline_fp.close()
+
     start_time = time.time()
     all_nf_nodes = placeTool.place_decision(conf_parser, enumerate_bool, op_mode)
     print("--- %s seconds ---" % (time.time() - start_time))
     all_nodes = all_nf_nodes
-    
+
     p4_list = []
     if all_nf_nodes:
         p4_logger.info(" -stats: total %d nodes" %(len(all_nf_nodes)))
@@ -190,14 +192,6 @@ def nfcp_compiler_main():
 
     # Open BESS script
     BG.generate_bess(conf_parser, all_nodes)
-    '''
-    writein_list = bessGenerator.convert_graph_to_bess(conf_parser, all_nodes)
-
-    for bess_line in writein_list:
-        bess_fp.write(bess_line)
-        bess_fp.write('\n')
-    bess_fp.close()
-    '''
 
     # Use 'nfcp_library_parser' to parse each P4 library
     print("NFCP Lib Parser is running...")
@@ -224,28 +218,24 @@ def nfcp_compiler_main():
     print("NFCP P4 Library Combiner is running...")
     p4_generator.lib_combine_main()
     p4_generator.lib_combine_show_stats(p4_logger)
-    #return # to test P4 Library Combiner
 
     print("NFCP P4 Code Generator is running...")
     output_fp.write(p4_generator.code_generator_main())
     
     output_fp.close()
     print("NFCP Compiler Ends!")
-    
+
+    """
+    # If you have a P4 switch and configure it in connect.py, you can
+    # use the P4 stage estimator to verify the generated P4 code can
+    # fit in the target hardware.
     # P4 stage estimator code example:
     checker = p4_usage_checker( './nf.p4', p4_list, 12 )
     cker_res = checker.lemur_check_p4_stage_usage()
     print('NFCP switch estimation:', checker.stage_usage, 'estimation res:', cker_res)
-
-    """
-    if (op_mode==0 or op_mode==6) and False: # To insert entry, set the flag to True
-        # The checker tells whether the target program fits into the switch or not
-        checker = p4_usage_checker( './nf.p4', p4_list, 12)
-        print("check stage")
-        print(checker.NFCP_check_p4_stage_usage())
     """
     return
 
 
 if __name__ == "__main__":
-    nfcp_compiler_main()
+    lemur_compiler_main()

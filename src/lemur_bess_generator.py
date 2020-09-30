@@ -5,7 +5,7 @@ This script converts NF chain graph into BESS code pipelines
 import os
 import copy
 from nf_placement import get_nic_info, bfs_sort
-from lemur_bess_generator_util import class_and_arg, new_gate_add, new_branch_add
+from util.lemur_bess_generator_util import class_and_arg, new_gate_add, new_branch_add
 
 
 def script_template(nic):
