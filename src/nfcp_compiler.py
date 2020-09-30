@@ -33,7 +33,6 @@ import logging
 import lemur_user_level_parser as configParser
 import lemur_p4lib_parser as libParser
 import lemur_code_generator as codeGenerator
-import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
 import new_bess_generator as BG
 import time

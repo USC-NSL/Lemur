@@ -10,7 +10,7 @@ import os
 import copy
 from nf_placement import get_nic_info, bfs_sort
 from nf_placement import log_module
-from nfcp_bess_generator import class_and_arg, new_gate_add, new_branch_add, instance_or_name
+from lemur_bess_generator import class_and_arg, new_gate_add, new_branch_add
 
 
 def script_template(nic):
