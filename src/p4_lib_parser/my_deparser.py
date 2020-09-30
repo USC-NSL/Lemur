@@ -1,48 +1,36 @@
-
 """
-* Title: my_deparser.py
-* Description:
-* The script is used to parse the myDeparser part in a P4 library file
-* 
-* Author: Jianfeng Wang
-* Time: 01/21/2018
-* Email: jianfenw@usc.edu
-*
+* The script implements an abstract deparser class. It parses egress
+* header sequence, and unifies them to form a final deparser.
 """
 
 import copy
 import header
 
-def seek_list_definition(file_pointer):
-	fp = file_pointer
-	for line in fp:
-		print line
-	return
-
-
-"""
-	convert_str_to_list():
-	This function is used to parse a string which is a definition of a list
-	It returns a python list, which contains exactly the same elements as the string does
-"""
 def convert_str_to_list(input_str):
+	""" This function parses converts a list (in str format) to a real Python
+	list, that has exactly the same set of elements as the original list.
+	"""
 	res_list = []
-
 	s_index = input_str.index('[')
 	e_index = input_str.index(']')
 	list_content = input_str[(s_index+1):e_index]
-	#print list_content
-	
 	list_elements = list_content.split(',')
 	for element in list_elements:
 		res_list.append( element.strip() )
 
-	#print res_list
 	return res_list
 
 
 class mydeparser:
-
+	"""
+	This is the abstract deparser class. It can read and parse the
+	P4 deparser in a P4 module.
+	Args:
+		all_headers: the global header list
+		objects: the header parser tree
+		deparser_seq: the final header sequence that works for every P4 module
+		p4_code: the final generated P4 code.
+	"""
 	def __init__(self, input_header_list=[], input_deparser_seq=[]):
 		self.all_headers = []
 		self.objects = {}
@@ -83,10 +71,8 @@ class mydeparser:
 					object_name = line[:mark_index].strip()
 					object_definition = line[mark_index+1:].strip()
 					object_obj = None
-					#print object_name, object_definition
 					object_obj = convert_str_to_list(object_definition)
 					self.objects[object_name] = object_obj
-					#print object_name, object_obj
 
 				if "add deparser(" in line:
 					deparser_seq_start = line.index('(')
@@ -100,14 +86,12 @@ class mydeparser:
 		res += "/*************************************************************************\n"
 		res += "************************  D E P A R S E R  *******************************\n"
 		res += "*************************************************************************/\n\n"
-
 		res += "control MyDeparser(packet_out packet, in headers hdr) {\n"
 		res += "\tapply {\n"
 
 		for dp_header in reversed(self.deparser_seq):
 			if dp_header in self.all_headers:
 				res += "\tpacket.emit(hdr.%s);\n" %( dp_header.lower() )
-		# for 'apply {'
 		res += "\t}\n"
 		res += "}\n"
 
@@ -116,15 +100,10 @@ class mydeparser:
 
 
 def my_deparser_tester():
-
 	mdp = mydeparser()
 	mdp.read_deparser_rules("design.dat")
 	mdp.generate_p4_code()
-
 	print mdp.p4_code
 
-
 if __name__ == '__main__':
-
 	my_deparser_tester()
-
