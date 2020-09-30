@@ -1,8 +1,10 @@
+// This is a smartNIC implementation of CHACHA packet cipher.
+// Lemur compiles NF DAGs to heterogenous hardware platforms. Once Lemur
+// compiler finds that a NF is placed at a BESS server (with a smartNIC),
+// Lemur's optimizer offloads the NF to the smartNIC opportunistically.
+// A smartNIC has a limited number of instructions. Once the NF can be
+// implemented in the smartNIC, the NF almost runs at line-rate.
 
-
-//------------------------------------------------------------------
-// Includes.
-//------------------------------------------------------------------
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -39,7 +41,6 @@ typedef struct
   uint8_t rounds;
 } chacha_ctx;
 
-
 //------------------------------------------------------------------
 // Macros.
 //------------------------------------------------------------------
@@ -59,13 +60,11 @@ typedef struct
   x[a] = PLUS(x[a],x[b]); x[d] = ROTATE(XOR(x[d],x[a]), 8); \
   x[c] = PLUS(x[c],x[d]); x[b] = ROTATE(XOR(x[b],x[c]), 7);
 
-
 //------------------------------------------------------------------
 // Constants.
 //------------------------------------------------------------------
 //static const uint8_t SIGMA[16] = "expand 32-byte k";
 static const uint8_t TAU[16]   = "expand 16-byte k";
-
 
 //------------------------------------------------------------------
 // doublerounds()
@@ -107,8 +106,6 @@ static __inline void doublerounds(uint8_t output[64], const uint32_t input[16], 
   }
 }
 
-
-
 //------------------------------------------------------------------
 // init()
 //
@@ -117,52 +114,19 @@ static __inline void doublerounds(uint8_t output[64], const uint32_t input[16], 
 //------------------------------------------------------------------
 static __inline void init(chacha_ctx *x, uint8_t *key, uint32_t keylen, uint8_t *iv)
 {
-  /*
-  if (keylen == 256) {
-    // 256 bit key.
-    x->state[0]  = U8TO32_LITTLE(SIGMA + 0);
-    x->state[1]  = U8TO32_LITTLE(SIGMA + 4);
-    x->state[2]  = U8TO32_LITTLE(SIGMA + 8);
-    x->state[3]  = U8TO32_LITTLE(SIGMA + 12);
-    x->state[4]  = U8TO32_LITTLE(key + 0);
-    x->state[5]  = U8TO32_LITTLE(key + 4);
-    x->state[6]  = U8TO32_LITTLE(key + 8);
-    x->state[7]  = U8TO32_LITTLE(key + 12);
-    x->state[8]  = U8TO32_LITTLE(key + 16);
-    x->state[9]  = U8TO32_LITTLE(key + 20);
-    x->state[10] = U8TO32_LITTLE(key + 24);
-    x->state[11] = U8TO32_LITTLE(key + 28);
-  }
-
-  else {
-    // 128 bit key.
-    x->state[0]  = U8TO32_LITTLE(TAU + 0);
-    x->state[1]  = U8TO32_LITTLE(TAU + 4);
-    x->state[2]  = U8TO32_LITTLE(TAU + 8);
-    x->state[3]  = U8TO32_LITTLE(TAU + 12);
-    x->state[4]  = U8TO32_LITTLE(key + 0);
-    x->state[5]  = U8TO32_LITTLE(key + 4);
-    x->state[6]  = U8TO32_LITTLE(key + 8);
-    x->state[7]  = U8TO32_LITTLE(key + 12);
-    x->state[8]  = U8TO32_LITTLE(key + 0);
-    x->state[9]  = U8TO32_LITTLE(key + 4);
-    x->state[10] = U8TO32_LITTLE(key + 8);
-    x->state[11] = U8TO32_LITTLE(key + 12);
-  }
-  */
   // 128 bit key.
-    x->state[0]  = U8TO32_LITTLE(TAU + 0);
-    x->state[1]  = U8TO32_LITTLE(TAU + 4);
-    x->state[2]  = U8TO32_LITTLE(TAU + 8);
-    x->state[3]  = U8TO32_LITTLE(TAU + 12);
-    x->state[4]  = U8TO32_LITTLE(key + 0);
-    x->state[5]  = U8TO32_LITTLE(key + 4);
-    x->state[6]  = U8TO32_LITTLE(key + 8);
-    x->state[7]  = U8TO32_LITTLE(key + 12);
-    x->state[8]  = U8TO32_LITTLE(key + 0);
-    x->state[9]  = U8TO32_LITTLE(key + 4);
-    x->state[10] = U8TO32_LITTLE(key + 8);
-    x->state[11] = U8TO32_LITTLE(key + 12);
+  x->state[0]  = U8TO32_LITTLE(TAU + 0);
+  x->state[1]  = U8TO32_LITTLE(TAU + 4);
+  x->state[2]  = U8TO32_LITTLE(TAU + 8);
+  x->state[3]  = U8TO32_LITTLE(TAU + 12);
+  x->state[4]  = U8TO32_LITTLE(key + 0);
+  x->state[5]  = U8TO32_LITTLE(key + 4);
+  x->state[6]  = U8TO32_LITTLE(key + 8);
+  x->state[7]  = U8TO32_LITTLE(key + 12);
+  x->state[8]  = U8TO32_LITTLE(key + 0);
+  x->state[9]  = U8TO32_LITTLE(key + 4);
+  x->state[10] = U8TO32_LITTLE(key + 8);
+  x->state[11] = U8TO32_LITTLE(key + 12);
 
   // Reset block counter and add IV to state.
   x->state[12] = 0;
@@ -171,13 +135,12 @@ static __inline void init(chacha_ctx *x, uint8_t *key, uint32_t keylen, uint8_t 
   x->state[15] = U8TO32_LITTLE(iv + 4);
 }
 
-
 //------------------------------------------------------------------
 // next()
 //
 // Given a pointer to the next block m of 64 cleartext bytes will
 // use the given context to transform (encrypt/decrypt) the
-// block. The result will be stored in c.
+// block. The results are directly updated in the packet payload.
 //------------------------------------------------------------------
 static __inline void next(chacha_ctx *ctx, uint8_t *m, const uint8_t *m_end)
 {
@@ -192,24 +155,10 @@ static __inline void next(chacha_ctx *ctx, uint8_t *m, const uint8_t *m_end)
     ctx->state[13] = PLUSONE(ctx->state[13]);
   }
 
-  // XOR the input block with the new temporal state to
-  // create the transformed block.
-  /*
-  if (m+64 > m_end) {
-    return;
-  }
-  
-  #pragma clang loop unroll (full)
-  for (i = 0 ; i < 64 ; ++i) {
-    //c[i] = m[i] ^ x[i];
-    m[i] ^= x[i];
-  }
-  */
   uint64_t * m_pos;
   uint64_t * x_pos;
   #pragma clang loop unroll (full)
   for (i = 0 ; i < 8 ; ++i) {
-    //c[i] = m[i] ^ x[i];
     m_pos = (uint64_t*)(m) + i;
     x_pos = (uint64_t*)(x) + i;
     *m_pos ^= *x_pos;
@@ -234,25 +183,6 @@ static __inline void init_ctx(chacha_ctx *ctx, uint8_t rounds)
   ctx->rounds = rounds;
 }
 
-/*
-static __inline int parse_tcp(struct xdp_md *ctx, __u64 nf_off) {
-	void *data_end = (void*)(long)ctx->data_end;
-	void *data = (void*)(long)ctx->data;
-	chacha_ctx cha_ctx;
-	//struct tcphdr *tcph;
-	uint8_t *pkt_data;
-	__u32 tcp_off;
-	//tcph = data + nf_off;
-	// pkt_data is the tcp payload
-	tcp_off = sizeof(struct tcphdr);
-	nf_off += tcp_off;
-	if (data + nf_off > data_end) {
-		return XDP_DROP;
-	}
-	pkt_data = data + nf_off;
-    return XDP_PASS;
-}*/
-
 static __always_inline bool parse_transport(void *data, __u64 off, void *data_end) {
 	struct udphdr *tudp;
 	tudp = data + off;
@@ -263,7 +193,6 @@ static __always_inline bool parse_transport(void *data, __u64 off, void *data_en
 		return true;
 	}
 }
-
 
 static __inline int parse_ip(struct xdp_md *ctx, __u64 nf_off) {
 	void *data_end = (void*)(long)ctx->data_end;
@@ -309,37 +238,26 @@ static __inline int parse_ip(struct xdp_md *ctx, __u64 nf_off) {
 
 	chacha_ctx cha_ctx;
 	uint8_t *pkt_data = data + nf_off;
-	/*
-	uint8_t t_result[64] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  */
-    uint8_t t_key[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  uint8_t t_key[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-    uint8_t t_iv[8]   = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    init_ctx(&cha_ctx, 8);
-    init(&cha_ctx, t_key, 128, t_iv);
+  uint8_t t_iv[8]   = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  init_ctx(&cha_ctx, 8);
+  init(&cha_ctx, t_key, 128, t_iv);
 
-    // loop here
-    int32_t i;
-    #pragma clang loop unroll (full)
-    for(i=0; i <= 23; i++) {
-      if (pkt_data + 64 > data_end) {
-        break;
-      }
-      //next(&cha_ctx, pkt_data, data_end, t_result);
-      next(&cha_ctx, pkt_data, data_end);
-      //memcpy(pkt_data, t_result, sizeof(t_result));
-      pkt_data += (__u64)64;
+  // loop here
+  int32_t i;
+  #pragma clang loop unroll (full)
+  for(i=0; i <= 23; i++) {
+    if (pkt_data + 64 > data_end) {
+      break;
     }
+
+    next(&cha_ctx, pkt_data, data_end);
+    pkt_data += (__u64)64;
+  }
 	return XDP_TX;
 }
 
@@ -364,4 +282,3 @@ int cha(struct xdp_md *ctx){
       return XDP_PASS;
     }
 }
-
