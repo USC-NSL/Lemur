@@ -134,7 +134,6 @@ def bess_code(conf_parser, all_nodes, final_bess_filename):
     final_bess_filename: BESS code filename
 
     """
-    bess_fp = open(final_bess_filename, 'w')
     BG.generate_bess(conf_parser, all_nodes)
 
 def fitp4(conf_parser, module_list, p4_filename, p4_version):

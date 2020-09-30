@@ -15,11 +15,14 @@ def script_template(nic):
     NIC_CORE = nic["core"]
     bess_filename = "%s.bess" % NIC_NAME
     bess_fp = open(bess_filename, 'w')
-    PRECOMPUTE_LINE = ("%s_nsh::NSHdecap()\n%s_myport=PMDPort(pci=\'%s\')\n" % (NIC_NAME, NIC_NAME, SERVER_PCI))
+    PRECOMPUTE_LINE = ("%s_nsh::NSHdecap()\n%s_myport=PMDPort(pci=\'%s\')\n" % \
+                        (NIC_NAME, NIC_NAME, SERVER_PCI))
     bess_fp.write(PRECOMPUTE_LINE)
-    PORTIN_LINE = "%s_pin::PortInc(port=%s_myport) -> %s_nsh\n" % (NIC_NAME, NIC_NAME, NIC_NAME)
+    PORTIN_LINE = "%s_pin::PortInc(port=%s_myport) -> %s_nsh\n" % \
+                        (NIC_NAME, NIC_NAME, NIC_NAME)
     bess_fp.write(PORTIN_LINE)
-    PORTOUT_LINE = "%s_queue::Queue() -> %s_pout::PortOut(port=%s_myport)\n" % (NIC_NAME, NIC_NAME, NIC_NAME)
+    PORTOUT_LINE = "%s_queue::Queue() -> %s_pout::PortOut(port=%s_myport)\n" % \
+                        (NIC_NAME, NIC_NAME, NIC_NAME)
     bess_fp.write(PORTOUT_LINE)
     CORE_LINE = ("for i in range(%d):\n\tbess.add_worker(i,i)\n" % int(NIC_CORE))
     bess_fp.write(CORE_LINE)

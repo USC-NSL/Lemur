@@ -189,7 +189,6 @@ def nfcp_compiler_main():
     p4_list = copy.deepcopy(all_p4_nodes)
 
     # Open BESS script
-    bess_fp = open(final_bess_filename, 'w')
     BG.generate_bess(conf_parser, all_nodes)
     '''
     writein_list = bessGenerator.convert_graph_to_bess(conf_parser, all_nodes)
