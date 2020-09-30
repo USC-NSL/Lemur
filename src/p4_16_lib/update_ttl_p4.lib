@@ -1,8 +1,7 @@
-############################################################
-# UPDATE_TTL.LIB
-# This module will decrease the ttl field in the IPv4 header by 1.
 #
-############################################################
+# update_ttl.lib
+# This is a dummy module that simply decreases the IPv4.ttl field by 1.
+#
 
 default_prefix = updatettl
 
@@ -21,7 +20,6 @@ add parser( Ethernet )
 
 
 # MyIngress
-
 action dec_ttl() {
 	hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
 }
@@ -43,6 +41,5 @@ apply {
 /*
  * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, Ethernet]
 add deparser( deparser_seq )
