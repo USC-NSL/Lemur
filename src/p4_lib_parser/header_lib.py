@@ -1,20 +1,12 @@
 """
-* Title: header_lib.py
-* Description:
-* This file is the header library. 
-* 'header.py' is looking at this file for these common libraries
-*
-* Author: Jianfeng Wang
-* Time: 01/16/2018
-* Email: jianfenw@usc.edu
-*
+* The script implements a header class that includes all common
+* header fields, and headers.
 """
 
 """
 Default data type:
-In the following, we list all commonly used data types in P4 language.
-These headers are always defined in the commonly used headers, i.e. IPv4, Ethernet
-and so on.
+we list commonly used data types in P4 language. Headers are (almost)
+always defined using them, i.e. IPv4, Ethernet and so on.
 """
 mac_addr_t = "macAddr_t"
 ipv4_addr_t = "ip4Addr_t"
@@ -35,8 +27,8 @@ bit_1_t = "bit<1>"
 
 class header_field(object):
 	"""
-	Description: the header_field class represents each header field in the 
-	P4 header definition code. Each header_field instance = one fixed length
+	The header_field class represents each header field in a P4 header
+    definition code. Each header_field instance = one fixed length
 	header field.
 	"""
 	def __init__(self, field_name="", field_bits=-1, field_type=None):
@@ -57,7 +49,7 @@ class header_field(object):
 
 """
 Default headers:
-In the following, we list all commonly used headers for all NF modules.
+We list commonly used headers for all NF modules.
 """
 ethernet = [ header_field("dstAddr", 48, mac_addr_t), \
 	header_field("srcAddr", 48, mac_addr_t), \
@@ -120,7 +112,6 @@ header nsh {
     bit<128> context;
 }
 """
-
 nsh = [ header_field("version", 2), \
 	header_field("oBit", 1), \
 	header_field("uBit", 1), \

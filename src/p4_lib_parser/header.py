@@ -1,14 +1,10 @@
+"""
+* The script implements an abstract const_macro_parser class that
+* parses the constant and macros spefication part in a Lemur P4
+* module. It also implements an abstract header_parser class that
+* parses the header definition part in a Lemur P4 module.
+"""
 
-"""
-* Title: header.py 
-* Description:
-* The script is used to parse the header definition part in the target file
-*
-* Author: Jianfeng Wang
-* Time: 01/16/2018
-* Email: jianfenw@usc.edu
-*
-"""
 import sys
 sys.path.append('..')
 import copy
@@ -17,7 +13,21 @@ import collections
 import re
 import util.lang_parser_helper as lang_helper
 
-class const_var_parser:
+
+class const_macro_parser:
+	"""
+	This is the abstract const_macro_parser class. It can read and
+	parse constants and macros in corresponding sections of a P4 module.
+	Args:
+		input_macro_list: the global marco list that contains all marcos
+		for all P4 NFs;
+		input_const_list: the global marco list that contains all marcos
+		for all P4 NFs;
+		p4_macro_code: the final generated P4 action code
+		p4_const_code: the final generated P4 table code
+		p4_code: the final generated P4 code
+		Note: p4_code = p4_const_code + p4_macro_code
+	"""
 	def __init__(self, input_macro_list=None, input_const_list=None):
 		self.macro_list = collections.OrderedDict()
 		self.const_list = collections.OrderedDict()
@@ -33,6 +43,9 @@ class const_var_parser:
 		return
 
 	def read_macros(self, filename):
+		""" Reads in macros defined in the target file. This function
+		stores new macros in the global macro list.
+		"""
 		with open(filename, 'r') as fp:
 			for line in fp:
 				parse_macro = lang_helper.lib_parser_macro(line)
@@ -52,18 +65,21 @@ class const_var_parser:
 		return
 
 	def read_const_variables(self, filename):
-		# Sample const: 
-		# const bit<16> TYPE_IPv4 = 0x0800;
+		""" Reads in constant variables defined in the target file. This
+		function stores new constant variables in the global constant list.
+		In the global dict, self.const_list[const_name] = (type, value)
+
+		Sample constant: const bit<16> TYPE_IPv4 = 0x0800;
+		"""
 		with open(filename, 'r') as fp:
 			for line in fp:
 				line = line.strip()
 				curr_res = re.match(r'add_const\((.*),(.*),(.*)\)', line, re.M|re.I)
 				if curr_res != None:
+					# Note: group(1)->name; group(2)->type; group(3)->value
 					curr_const = curr_res.span()
-					# group 1 - name; group 2 - type; group 3 - value
-					# In the dictionary, self.const_list[const_name] = (type, value)
 					curr_const_name = curr_res.group(1)
-					curr_const_def = ( curr_res.group(2), curr_res.group(3) )
+					curr_const_def = (curr_res.group(2), curr_res.group(3))
 					self.const_list[curr_const_name] = curr_const_def
 		return
 
@@ -100,8 +116,21 @@ class const_var_parser:
 		self.p4_code = res_code
 		return
 
-class header_parser:
 
+class header_parser:
+	"""
+	This is the abstract header_parser class. It can read and parse
+	header definitions in the header section of a P4 module.
+	Args:
+		headers: the global header list that contains all headers
+		from all P4 NFs;
+		metadata: the global metadata list that contains all metadata
+		from all P4 NFs;
+		p4_header_code: the final generated P4 header code
+		p4_meta_code: the final generated P4 metadata code
+		p4_code: the final generated P4 code
+		Note: p4_code = p4_header_code + p4_meta_code
+	"""
 	def __init__(self, input_header_list=[], input_metadata_list=collections.OrderedDict()):
 		self.headers = copy.deepcopy(input_header_list)
 		self.metadata = copy.deepcopy(input_metadata_list)
@@ -111,6 +140,9 @@ class header_parser:
 		return
 
 	def read_headers(self, filename):
+		""" Reads in header fields defined in the target file. This
+		function stores new header fields in the global header list.
+		"""
 		headers = []
 		with open(filename, 'r') as fp:
 			for line in fp:
@@ -154,6 +186,9 @@ class header_parser:
 		return
 
 	def read_metadata(self, filename):
+		""" Reads in metadata fields defined in the target file. This
+		function stores new metadata fields in the global metadata list.
+		"""
 		metadata = []
 		with open(filename, 'r') as fp:
 			line_count = 0
@@ -200,10 +235,10 @@ class header_parser:
 		self.p4_meta_code = res
 		return
 
-	
 	def generate_p4_default_code(self):
-		""" Description: the function is used to generate the default code for the header definition part.
-		Note: it should also declare some commonly used 'macro's, such as macAddr_t.
+		""" This function generates the default code for the header
+		definition part.
+		Note: it also declares some commonly used macros, such as macAddr_t.
 		"""
 		if self.p4_code == None:
 			self.p4_code = ""
@@ -247,18 +282,18 @@ class header_parser:
 		self.p4_code = header_head_code + self.p4_code + header_tail_code
 		return
 
-	"""
-		First, the library parser will call read_headers(...) and read_metadata(...)
-		in order to parse the library file and store necessary information in the lists,
-		i.e. self.headers and self.metadata.
-
-		Then, the library parser will call generate_p4_code(...). This function will have
-		to call self.generate_p4_header_code(...) and self.generate_p4_metadata_code(...)
-		to generate the partial p4 code for the header part and the metadata part respectively.
-
-		The generated code is stored in self.p4_code as a single string.
-	"""
 	def generate_p4_code(self):
+		""" This function generates both the header and metadata fields
+		for the final P4 code. Additionally, it generates other default
+		code, such as the comment code marking the header and metadata
+		code section.
+		Here is a detailed description:
+		The parser calls read_headers and read_metadata to parse the
+		target P4lib file and store necessary information in global lists.
+		Then, it parser calls generate_p4_code (which calls
+		generate_p4_header_code and generate_p4_metadata_code) and stores
+		results in self.p4_code.
+		"""
 		if self.p4_code == None:
 			self.p4_code = ""
 
@@ -292,9 +327,10 @@ class header_parser:
 		self.generate_p414_default_code()
 		return
 
+
 def header_parser_tester():
 	print "Test 1 - cp macro parser and code generator"
-	cp = const_var_parser()
+	cp = const_macro_parser()
 	cp.read_macros("./p4_lib/acl.lib")
 	cp.generate_p4_macro_code()
 	print cp.p4_macro_code
@@ -307,18 +343,13 @@ def header_parser_tester():
 	print "\nTest 3 - hp header parser ..."
 	hp = header_parser()
 	hp.read_headers("./p4_lib/acl.lib")
-	#print hp.headers
 
 	print "       - hp metadata parser ..."
 	hp.read_metadata("./p4_lib/acl.lib")
 
 	print "       - hp code generator ..."
-	#hp.generate_p4_code()
 	hp.generate_p414_code()
 	print hp.p4_code
 
-
 if __name__ == '__main__':
-
 	header_parser_tester()
-

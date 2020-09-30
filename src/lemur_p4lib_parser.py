@@ -55,7 +55,7 @@ class lemur_p4lib_parser(object):
         self.lib_parser_handle_deparser_state()
 
     def lib_parser_handle_const_var(self):
-        cp = header.const_var_parser()
+        cp = header.const_macro_parser()
         cp.read_macros(self.lib_filename)
         self.nf_node.nf_node_store_macro(cp.macro_list)
 
@@ -115,7 +115,7 @@ class lemur_p4lib_parser(object):
 
 
 def lemur_p4lib_parser_handle_const_var(p4lib_filename, nf_node):
-    cp = header.const_var_parser()
+    cp = header.const_macro_parser()
     cp.read_macros(p4lib_filename)
     nf_node.nf_node_store_macro(cp.macro_list)
     cp.read_const_variables(p4lib_filename)

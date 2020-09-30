@@ -1,19 +1,12 @@
+"""
+* The script implements an abstract my_compute_checksum class that
+* generates the P4 code to generate a correct checksum.
+"""
 
-"""
-* Title: my_computechecksum.py
-* Description:
-* The script is used to print the MyComputeChecksum(...) for the final P4 code file
-* Currently, we do not parse anything for the MyComputeChecksum(...) module
-* (We might support more functions later)
-*
-* Author: Jianfeng Wang
-* Time: 02/26/2018
-* Email: jianfenw@usc.edu
-*
-"""
 
 class my_compute_checksum:
-
+	""" This class outputs the checksum computation code directly.
+	"""
 	def __init__(self):
 		self.p4_code = None
 		return
@@ -23,7 +16,6 @@ class my_compute_checksum:
 		res += "/*************************************************************************\n"
 		res += "**************   C H E C K S U M    C O M P U T A T I O N   **************\n"
 		res += "*************************************************************************/\n\n"
-
 		res += "control MyComputeChecksum(inout headers hdr, inout metadata meta) {\n"
 		res += "\tapply {\n"
 		res += "\t\tupdate_checksum(\n"
@@ -43,16 +35,13 @@ class my_compute_checksum:
 		res += "\t\tHashAlgorithm.csum16);\n"
 		res += "\t}\n"
 		res += "}\n\n"
-
 		self.p4_code = res
-		return
 
 	def generate_p414_code(self):
 		res = ""
 		res += "/*************************************************************************\n"
 		res += "**************   C H E C K S U M    C O M P U T A T I O N   **************\n"
 		res += "*************************************************************************/\n\n"
-
 		res += "field_list ipv4_field_list {\n"
 		res += "\tipv4.version;\n"
 		res += "\tipv4.ihl;\n"
@@ -79,7 +68,7 @@ class my_compute_checksum:
 		res += '\tupdate ipv4_chksum_calc;\n'
 		res += '}\n'
 		self.p4_code = res
-		return
+
 
 def compute_checksum_tester():
 	csum = my_compute_checksum()
@@ -89,7 +78,5 @@ def compute_checksum_tester():
 	csum.generate_p414_code()
 	print csum.p4_code
 
-
 if __name__ == '__main__':
 	compute_checksum_tester()
-
