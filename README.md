@@ -1,5 +1,7 @@
 # Lemur Compiler
-Lemur is a flexible, high-speed packet processing system that meets SLOs in cross-platform NFV. 
+Lemur is a flexible and high-performance packet processing framework that meets SLOs in cross-platform NFV.
+
+Lemur works as a cross-platform compiler. It parses NF chains from a user-level specification, and considers all available hardware resources to generate an placement scheme for NFs. In Lemur, NFs from the same NF chain may be placed at different platforms. Lemur considers the fundemental tradeoff between performance and programmability to achieve a higher throughput.
 
 ## Features
 (1) Flexible configuration of multiple network service chains <br>
@@ -41,14 +43,14 @@ AESCBC()-> VLANPush()->IPv4Forward()
 (1) Run Lemur compiler with heuristic algorithm<br>
 Let's assume that you are trying to compile `chain_1.conf`. You will run the Lemur compiler by typing the following.<br>
 ```bash
-$ python nf_heuristic.py -f chain_1
+$ python lemur_heuristic_compiler.py -f chain_1
 ```
 
 The Lemur compiler will output two files. `nf.p4` is the final P4 code that incorporates all P4 NF nodes, while `intel_nic1.bess` is the final BESS configuration script that includes all BESS modules. The naming of BESS script is based on the nic information provided in `device.txt`. <br>
 
 (optional) If you would like to compare with the brutal force algorithm and other alternatives, type the following.
 ```bash
-$ python nfcp_compiler -f chain_1
+$ python lemur_compiler -f chain_1
 ```
 The default algorithm is the brutal force algorithm. To change to other alternatives, you can set `-m {$MODE_NUMBER}` to switch. For more detail, please use `-h` to view options. 
 
