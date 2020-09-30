@@ -1,1 +1,0 @@
-{"nic": [{"core": "16", "name": "intel_nic1", "ip": "204.57.7.14", "driver": "igb_uio", "pci": "5e:00.0", "throughput": "40000"}]}
