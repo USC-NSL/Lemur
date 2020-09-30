@@ -191,7 +191,7 @@ def next_placement_to_offload_p4(module_list):
 
     return module_list
 
-def highest_core_allocation_derived_from_LP(module_list):
+def core_allocation_for_highest_tput_derived_from_LP(module_list):
     """ Run core allocation and estimate throughput to get
         final chosen placement and core allocation
 
@@ -581,7 +581,7 @@ def heuristic_main():
             satisfy_SLO = False
             for case_list in candidate_list:
                 SLO_result, case_list, estimate_throughput = \
-                    highest_core_allocation_derived_from_LP(case_list)
+                    core_allocation_for_highest_tput_derived_from_LP(case_list)
                 if SLO_result:
                     satisfy_SLO = True
                 new_candidate_list.append(case_list)
