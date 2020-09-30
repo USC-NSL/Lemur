@@ -551,8 +551,8 @@ def heuristic_main():
     while(not stop_search):
         
         if state == 0: 
-            #success = fitp4(conf_parser, node_list, final_p4_filename, p4_version)
-            success = True  ## Skip remote compilation if the result is known 
+            success = fitp4(conf_parser, node_list, final_p4_filename, p4_version)
+            #success = True  ## Skip remote compilation if the result is known 
             if success: state = 1.5
             else:  state = 1                   
 
