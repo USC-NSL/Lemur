@@ -1,12 +1,15 @@
-############################################################
 #
-# SEND_TO_BESS.LIB
-# This will send the current packet to the server path.
+# Title: send_to_bess.lib
+# This P4 module sends incoming packets to a BESS server.
+# This P4 module should be transparent to Lemur users. It must be added
+# by Lemur's meta-compliler.
 #
-############################################################
 
 default_prefix = nshencap
 
+/*
+ * P4 module marcos
+ */
 add macro(CPU_PORT, 8)
 add macro(BESS_PORT, 9)
 
@@ -14,30 +17,28 @@ add_const(TYPE_NSH, bit<16>, 0x894F)
 add_const(TYPE_IPV4, bit<16>, 0x0800)
 add_const(TYPE_NSH_IPV4, bit<8>, 0x01)
 
-
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define NSH
 #define IPv4
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 
 
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 2, {TYPE_IPV4:IPv4, TYPE_NSH:NSH })
 set IPv4(None, 0, {})
 set NSH(nextProto, 1, {TYPE_NSH_IPV4:IPv4})
 add parser( Ethernet )
 
-# MyIngress
 
+# MyIngress
 action init_metadata() {
 }
 
@@ -79,7 +80,6 @@ action send_to_controller() {
 	standard_metadata.egress_spec = CPU_PORT;
 }
 
-
 apply {
 	// for NSHEncap module, we only need to set up the self.nsh_flag
 	
@@ -87,14 +87,11 @@ apply {
 	meta.forward_flag = (bit<4>)0;
 }
 
-
 # MyEgress
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, NSH, Ethernet]
 add deparser( deparser_seq )
-

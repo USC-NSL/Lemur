@@ -1,12 +1,15 @@
-############################################################
 #
 # Title: sys_default.lib
-# This library contains actions and tables that are needed by NFCP.
+# This P4 module is the default module for every P4 pipeline.
+# It contains common headers, metadata fields, actions and tables
+# used by a Lemur P4 piepline (mostly for handling NSH header).
 #
-############################################################
 
 default_prefix = sys
 
+/*
+ * P4 module marcos
+ */
 add macro(BESS_PORT, 44)
 add macro(CPU_PORT, 9)
 add macro(TYPE_VLAN, 0x0810)
@@ -17,7 +20,7 @@ add macro(TYPE_IPV4, 0x0800)
 add macro(TYPE_IPV6, 0x0816)
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define VLAN
@@ -26,7 +29,7 @@ add macro(TYPE_IPV6, 0x0816)
 #define IPv6
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 add metadata(service_path_id, 24)
 add metadata(service_id, 8)

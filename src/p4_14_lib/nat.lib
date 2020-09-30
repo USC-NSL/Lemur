@@ -1,27 +1,28 @@
-############################################################
 #
-# NAT.LIB
-# This will perform the simple NAT functions.
+# Title: nat.lib
+# This P4 module implements a NAT function that does the link-layer
+# modification at the switch's egress pipeline.
 #
-# Author: Jane, Jianfeng
-############################################################
 
 default_prefix = snat
 
+/*
+ * P4 module marcos
+ */
 add macro(TYPE_NSH, 0x894F)
 add macro(TYPE_IPV4, 0x0800)
 add macro(TYPE_NSH_IPV4, 0x01)
 add macro(TYPE_TCP, 0x06)
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define NSH
 #define IPv4
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 add metadata(do_forward, bit<1>)
 add metadata(is_ext_if, bit<1>)
@@ -39,9 +40,8 @@ add metadata(SPI, bit<24>)
 add metadata(SI, bit<8>)
 
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 2, {TYPE_IPV4:IPv4, TYPE_NSH:NSH})
 set NSH(nextProto, 1, {TYPE_NSH_IPV4: IPv4})
 set IPv4(nextProto, 1, {TYPE_TCP: TCP})
@@ -52,7 +52,6 @@ add parser( Ethernet )
 /*
  * P4 MyIngress Part
  */
-
 action _drop(){
 	drop();
 }
@@ -154,7 +153,6 @@ table forward{
 }
 
 /* egress action & table*/
-
 
 action set_tcp(){
 	modify_field(tcp.srcPort, meta.srcPort);

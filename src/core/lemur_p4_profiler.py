@@ -11,7 +11,7 @@ import subprocess
 import collections
 import copy
 import math
-import nfcp_library_parser as libParser
+import lemur_p4lib_parser as libParser
 import lemur_code_generator as codeGen
 import connect as Conn
 from p4_lib_parser.ingress_match_action import p4_table

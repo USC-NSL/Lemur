@@ -31,7 +31,7 @@ import collections
 import argparse
 import logging
 import lemur_user_level_parser as configParser
-import nfcp_library_parser as libParser
+import lemur_p4lib_parser as libParser
 import lemur_code_generator as codeGenerator
 import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
@@ -200,9 +200,8 @@ def nfcp_compiler_main():
         bess_fp.write('\n')
     bess_fp.close()
     '''
-    
+
     # Use 'nfcp_library_parser' to parse each P4 library
-    # Method: libParser.nfcp_lib_parser(lib_repo, nf_node)
     print("NFCP Lib Parser is running...")
     for p4_node in p4_list:
         lib_filename = p4_14_module_list[p4_node.nf_class]
@@ -213,7 +212,9 @@ def nfcp_compiler_main():
 
         p4_logger.info("Read '%s': processing '%s'[spi=%d,si=%d]" %(lib_filename, p4_node.name, \
             p4_node.service_path_id, p4_node.service_id))
-        lib_parser = libParser.nfcp_lib_parser(lib_dir, p4_node)
+
+        lib_parser = libParser.lemur_p4lib_parser(lib_dir, p4_node)
+
         p4_logger.info("lib info: %d macros, %d const variables" %(len(p4_node.macro_list), len(p4_node.const_list)))
         p4_logger.info("lib info: headers: %s" %(str(p4_node.header_list)))
         p4_logger.info("lib info: %d metadata fields" %(len(p4_node.metadata_dict)))
@@ -250,4 +251,3 @@ def nfcp_compiler_main():
 
 if __name__ == "__main__":
     nfcp_compiler_main()
-

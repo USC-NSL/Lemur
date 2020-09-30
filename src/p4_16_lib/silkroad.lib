@@ -1,15 +1,19 @@
-
-/* The NFCP library for the silkroad load balancer
- *
- * NFCP libraries are created by the NFCP developers.
- * Details should not be exposed to the NFCP users.
- * The NFCP users should call "silkroad" module in order to use the load balancer.
- * Author: Jianfeng
- * Timestamp: Jan. 1st, 2018
- */
+#
+# Title: silkroad.lib
+# This P4-16 module is a naive implementation of SilkRoad load balancer.
+# SilkRoad [SIGCOMM 17'] is the first load balancer that ensures
+# per-connection consistency in a programmable switch.
+#
+# This implementation does not compress rules. Therefore, it cannot
+# serve millions of connections. Please see the full paper to see
+# the comprehensive-implementation of SilkRoad LB.
+#
 
 default_prefix = silkroad
 
+/*
+ * P4 module marcos
+ */
 add macro(CONN_TABLE_SIZE, 50)
 add macro(VIP_TABLE_SIZE, 50)
 add macro(DIP_POOL_TABLE_SIZE, 50)
@@ -19,9 +23,8 @@ add_const(TYPE_IPV6, bit<16>, 0x0816)
 add_const(TYPE_TCP, bit<8>, 0x06)
 add_const(TYPE_UDP, bit<8>, 0x11)
 
-
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define NSH
@@ -29,9 +32,8 @@ add_const(TYPE_UDP, bit<8>, 0x11)
 #define TCP
 #define UDP
 
-
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 add metadata(conn_table_miss_flag, bit<4>)
 add metadata(vip_table_miss_flag, bit<4>)
@@ -42,9 +44,8 @@ add metadata(dip_pool_version, bit<32>)
 add metadata(dip_select, bit<14>)
 
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 2, {TYPE_IPV4:IPv4, TYPE_IPV6:IPv6 })
 set IPv4(protocol, 2, {TYPE_TCP:TCP, TYPE_UDP:UDP})
 set IPv6(None, 0, {})
@@ -57,7 +58,6 @@ add parser( Ethernet )
 /*
  * Ingress Match/Action Table Part
  */
-
 action init_metadata() {
 	meta.conn_table_miss_flag = (bit<4>)0;
 	meta.vip_table_miss_flag = (bit<4>)0;
@@ -182,13 +182,12 @@ apply {
 
 
 /*
- * Egress Match/Action Table Part (not finished yet)
+ * Egress Match/Action Table Part
  */
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [UDP, TCP, IPv4, NSH, Ethernet]
 add deparser( deparser_seq )

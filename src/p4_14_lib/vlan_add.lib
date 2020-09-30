@@ -1,21 +1,23 @@
-############################################################
-# VLANADD.LIB
-# This will add vlan header to packet between Ethernet and IP layer.
-# VLAN is used to partition and isolate network at data link layer.
-# Its header field contains TPID and TCI.
-# You can assign TCI value to vlan header.
 #
-############################################################
+# vlan_add.lib
+# This P4 module is to add a vlan header to packet between the Ethernet
+# header and its IP header.
+# Note: VLAN is used to partition and isolate network at data link layer.
+# A VLAN header contains TPID and TCI fields.
+# You can assign TCI value to a vlan header.
+#
 
 default_prefix = vlan_add
 
+/*
+ * P4 module marcos
+ */
 add macro(ETHERTYPE_IPV4, 0x0800)
 add macro(ETHERTYPE_VLAN, 0x8100)
 
 /*
  * Header Definition Part
  */
-
 #define Ethernet
 #define VLAN
 #define IPv4
@@ -73,9 +75,5 @@ apply {
 /*
  * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, VLAN, Ethernet]
 add deparser( deparser_seq )
-
-
-

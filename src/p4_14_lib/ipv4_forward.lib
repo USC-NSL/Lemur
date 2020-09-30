@@ -1,12 +1,16 @@
-############################################################
 #
-# IPV4_FORWARD.LIB
-# This will perform the basic IPV4 forwarding functions.
+# Title: ipv4_forward.lib
+# This P4 module implements the basic IPv4 forwardfing functions.
+# It checks ipv4_forward_table to find the target egress port number
+# for an incoming packets, and sends the packet to its target port.
+# If the destined host cannot be found, then simply drop the packet.
 #
-############################################################
 
 default_prefix = ipv4forward
 
+/*
+ * P4 module marcos
+ */
 add macro(IPV4_FORWARD_TABLE_SIZE, 5000)
 add macro(TYPE_IPV4, 0x0800)
 add macro(TYPE_IPV6, 0x0816)
@@ -14,25 +18,23 @@ add macro(TYPE_TCP, 0x06)
 add macro(TYPE_UDP, 0x11)
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
-
 #define Ethernet
 #define IPv4
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
-
 add metadata(ipv4_forward_table_miss_flag, 4)
 
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 1, { TYPE_IPV4:IPv4 })
 set IPv4(None, 0, {})
 add parser( Ethernet )
+
 
 # MyIngress
 
@@ -92,9 +94,7 @@ apply {
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, Ethernet]
 add deparser( deparser_seq )
-
