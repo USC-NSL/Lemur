@@ -34,7 +34,7 @@ import lemur_user_level_parser as configParser
 import lemur_p4lib_parser as libParser
 import lemur_code_generator as codeGenerator
 import util.lang_parser_helper as lang_helper
-import new_bess_generator as BG
+import lemur_bess_generator as BG
 import time
 from util.lemur_nf_node import *
 from core.lemur_p4_profiler import p4_usage_checker

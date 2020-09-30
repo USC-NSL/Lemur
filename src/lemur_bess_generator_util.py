@@ -1,5 +1,5 @@
 """
-LEMUR_BESS_GENERATOR.PY
+LEMUR_BESS_GENERATOR_UTIL.PY
 This script converts NF chain graph into BESS code pipelines
 """
 

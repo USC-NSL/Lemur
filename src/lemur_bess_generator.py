@@ -1,10 +1,6 @@
 """
-NEW_BESS_GENERATOR.PY
+LEMUR_BESS_GENERATOR.PY
 This script converts NF chain graph into BESS code pipelines
-
-Author: Jane Yen
-Time: 12/05/2018
-Email: yeny@usc.edu
 """
 import os
 import copy
