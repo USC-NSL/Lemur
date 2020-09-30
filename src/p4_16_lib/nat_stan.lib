@@ -1,13 +1,14 @@
-############################################################
 #
-# NAT_STAN.LIB
-# This will perform the simple NAT functions.
+# Title: nat_stan.lib
+# This P4-16 module implements a NAT function that does the link-layer
+# modification at the switch's egress pipeline.
 #
-# Author: Jianfeng
-############################################################
 
 default_prefix = nat
 
+/*
+ * P4 module marcos
+ */
 add macro(INTERFACE_LOOKUP_TABLE_SIZE, 50)
 add macro(NAT_CONN_TABLE_SIZE, 50)
 
@@ -16,24 +17,22 @@ add_const(TYPE_NSH, bit<16>, 0x894F)
 add_const(TYPE_TCP, bit<8>, 0x06)
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define IPv4
 #define TCP
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 add metadata(interface_lookup_table_miss_flag, bit<4>)
 add metadata(nat_conn_table_miss_flag, bit<4>)
 add metadata(is_external, bit<4>)
 
-
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
 set IPv4(protocol, 1, {TYPE_TCP: TCP})
 set TCP(None, 0, {})
@@ -41,7 +40,6 @@ add parser( Ethernet )
 
 
 # MyIngress
-
 action init_metadata() {
 	meta.is_external = 1;
 	meta.interface_lookup_table_miss_flag = 0;
@@ -167,7 +165,7 @@ apply {
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
 deparser_seq = [TCP, IPV4, Ethernet]
 add deparser( deparser_seq )

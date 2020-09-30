@@ -1,16 +1,20 @@
-############################################################
-# MAC_SWAP.LIB
-# This module will swap src/dst MAC address of a packet.
 #
-############################################################
+# Title: mac_swap.lib
+# This P4 module implements a simple but important function: it swaps the
+# src and dst Ethernet addresses for an incoming packet.
+#
 
 default_prefix = mac_swap
+
+/*
+ * P4 module marcos
+ */
+
 
 /*
  * Header Definition Part
  */
 #define Ethernet
-
 
 /*
  * P4 Header Parser Specification Part
@@ -25,7 +29,6 @@ add metadata(addrCopy, bit<48>)
 
 
 # MyIngress
-
 action swap() {
 	modify_field(meta.addrCopy, ethernet.srcAddr);
     modify_field(ethernet.srcAddr, ethernet.dstAddr);
@@ -54,6 +57,5 @@ apply {
 /*
  * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [Ethernet]
 add deparser( deparser_seq )

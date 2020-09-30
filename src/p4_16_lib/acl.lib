@@ -1,30 +1,28 @@
-############################################################
-# ACL.LIB
-# This will perform the basic access control list (ACL) functions.
-# You can match MAC, IP, TCP fields easily.
-# You can also define your own header and implement the corresponding
-# actions to get what you want.
 #
-############################################################
+# Title: acl.lib
+# This P4-16 module implements the basic access control list (ACL) function.
+# It matches on Ethernet, IP, TCP fields. You can also define customized
+# headers and implement corresponding actions to serve your goal.
+#
 
 default_prefix = acl
 
+/*
+ * P4 module marcos
+ */
 add macro(ACL_IP_TABLE_SIZE, 50)
 add_const(TYPE_IPV4, bit<16>, 0x0800)
 
 /*
  * Header Definition Part
  */
-
 #define Ethernet
 #define IPv4
 
 /* Metadata Definition Part
  *
  */
-
 add metadata(acl_ip_table_miss_flag, bit<4>)
-
 
 /*
  * P4 Header Parser Specification Part
@@ -33,8 +31,8 @@ set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
 set IPv4(None, 0, {})
 add parser( Ethernet )
 
-# MyIngress
 
+# MyIngress
 action drop() {
 	mark_to_drop();
 }
@@ -86,11 +84,7 @@ apply {
 
 
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, Ethernet]
 add deparser( deparser_seq )
-
-
-

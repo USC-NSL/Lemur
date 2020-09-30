@@ -1,21 +1,21 @@
-############################################################
 #
-# SEND_TO_BESS.LIB
-# This will send the current packet to the server path.
+# Title: send_to_bess.lib
+# This P4 module sends incoming packets to a BESS server.
+# This P4 module should be transparent to Lemur users. It must be added
+# by Lemur's meta-compliler.
 #
-############################################################
 
 default_prefix = nshencap
 
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
 #define Ethernet
 #define NSH
 #define IPv4
 
 /*
- * Metadata Definition Part (not finished yet)
+ * Metadata Definition Part
  */
 
 /*
@@ -50,4 +50,3 @@ apply {
  */
 deparser_seq = [IPv4, NSH, Ethernet]
 add deparser( deparser_seq )
-

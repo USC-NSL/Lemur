@@ -1,45 +1,36 @@
-
-/* The NFCP library for the basic forwarding module
- *
- * NFCP libraries are created by the NFCP developers.
- * Details should not be exposed to the NFCP users.
- * The NFCP users should call "basic" module in order to use the load balancer.
- * Author: Jianfeng
- * Timestamp: Jan. 1st, 2018
- */
+#
+# Title: basic.lib
+# This P4 module implements a basic forwarding function.
+# It matches on the destination IPv4 address, and sets up the next-hop
+# Ethernet address and the egress switch port.
+#
 
 default_prefix = "basic"
 
-
 /*
- * Header Definition Part (Done)
+ * Header Definition Part
  */
-
 #define Ethernet
 #define IPv4
 
-
 /*
- * Metadata Definition Part (Done)
+ * Metadata Definition Part
  */
 add metadata()
 add metadata(dstAddr, ip4Addr_t)
 add metadata(cpu_copy, bit<8>)
 
-
 /*
- * P4 Header Parser Specification Part (Done)
+ * P4 Header Parser Specification Part
  */
-
 set Ethernet(etherType, 1, {TYPE_IPV4:IPv4})
 set IPv4(None, 0, {})
 add parser( Ethernet )
 
 
 /*
- * Ingress Match/Action Table Part (not finished yet)
+ * Ingress Match/Action Table Part
  */
-
 action _drop() {
 	drop();
 }
@@ -54,7 +45,7 @@ action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
 	modify_field(ethernet.srcAddr, ethernet.srcAddr);
 	modify_field(ethernet.dstAddr, dstAddr);
 	modify_field(standard_metadata.egress_spec, port);
-	add_to_field( ipv4.ttl, -1);
+	add_to_field(ipv4.ttl, -1);
 }
 
 table ipv4_lpm {
@@ -74,17 +65,13 @@ apply {
 	}
 }
 
-
 /*
  * Egress Match/Action Table Part (default)
  */
 
 
-
-
 /*
- * P4 Header Deparser Specification Part (Done)
+ * P4 Header Deparser Specification Part
  */
-
 deparser_seq = [IPv4, Ethernet]
 add deparser( deparser_seq )
