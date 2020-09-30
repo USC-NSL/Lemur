@@ -1,3 +1,8 @@
+"""
+NF_HEURISTIC.PY
+This script executes heuristic to decide placement
+and generate corresponding codes
+"""
 from __future__ import print_function
 import os
 import subprocess
@@ -186,7 +191,7 @@ def next_placement_to_offload_p4(module_list):
 
     return module_list
 
-def highest_core_allocation_derived_from_LP(module_list):
+def core_allocation_for_highest_tput_derived_from_LP(module_list):
     """ Run core allocation and estimate throughput to get
         final chosen placement and core allocation
 
@@ -551,8 +556,8 @@ def heuristic_main():
     while(not stop_search):
         
         if state == 0: 
-            #success = fitp4(conf_parser, node_list, final_p4_filename, p4_version)
-            success = True  ## Skip remote compilation if the result is known 
+            success = fitp4(conf_parser, node_list, final_p4_filename, p4_version)
+            #success = True  ## Skip remote compilation if the result is known 
             if success: state = 1.5
             else:  state = 1                   
 
@@ -576,7 +581,7 @@ def heuristic_main():
             satisfy_SLO = False
             for case_list in candidate_list:
                 SLO_result, case_list, estimate_throughput = \
-                    highest_core_allocation_derived_from_LP(case_list)
+                    core_allocation_for_highest_tput_derived_from_LP(case_list)
                 if SLO_result:
                     satisfy_SLO = True
                 new_candidate_list.append(case_list)
