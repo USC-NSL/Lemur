@@ -3,9 +3,9 @@ import gurobipy as gp
 
 
 def maximizeMarginalRate(bounds, A, b, noLog=True):
+    # A is a matrix and b is a column vector
     # bounds = ((min_f1, max_f1), ..., (min_fk, max_fk))
     # A f <= b
-    # A is a matrix and b is a column vector
     # return (throughput_f1, ... throughput_fk) > (0, ..., 0) if feasible;
     # otherwise (0, ..., 0)
     numFlow = len(bounds)
@@ -49,6 +49,14 @@ def maximizeMarginalRate(bounds, A, b, noLog=True):
 
 
 def marginalRate(bounds, throughputs):
+    """ Calculate marginal rate according to estimated
+        throughput and SLO for each chain
+
+    Parameter:
+    bounds: the min/max SLOs
+    throughputs: the computed throughput for all chains
+
+    """
     assert len(bounds) == len(throughputs)
     return tuple(throughputs[i] - bounds[i][0] for i in range(len(bounds)))
 

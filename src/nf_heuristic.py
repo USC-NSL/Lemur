@@ -1,3 +1,8 @@
+"""
+NF_HEURISTIC.PY
+This script executes heuristic to decide placement
+and generate corresponding codes
+"""
 from __future__ import print_function
 import os
 import subprocess
