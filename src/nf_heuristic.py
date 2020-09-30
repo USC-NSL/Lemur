@@ -4,16 +4,14 @@ import subprocess
 import collections
 import argparse
 import itertools
-import nfcp_user_level_parser as configParser
-import nfcp_library_parser as libParser
-import nfcp_code_generator as codeGenerator
+import lemur_user_level_parser as configParser
+import lemur_p4lib_parser as libParser
+import lemur_code_generator as codeGenerator
 import util.lang_parser_helper as lang_helper
-import new_bess_generator as BG
+import lemur_bess_generator as BG
 from termcolor import colored
 from util.lemur_nf_node import *
 import util.lemur_nf_node as ND
-from util.nfcp_install_table_entry import NFCP_entry_helper
-from core.profile_p4 import p4_usage_checker
 from connect import stage_feasible
 from nfcp_compiler import get_argparse
 from user_level_parser.UDLemurUserListener \
@@ -115,9 +113,9 @@ def generate_code(conf_parser, module_list, p4_filename, p4_version):
             lib_dir = os.path.join(P414_LIB_DIR, lib_filename)
         elif p4_version == 'p416':
             lib_dir = os.path.join(P416_LIB_DIR, lib_filename)
-        lib_parser = libParser.nfcp_lib_parser(lib_dir, p4_node)
+        lib_parser = libParser.lemur_p4lib_parser(lib_dir, p4_node)
 
-    p4_generator = codeGenerator.nfcp_code_generator(conf_parser.scanner, p4_list, p4_version)
+    p4_generator = codeGenerator.lemur_code_generator(conf_parser.scanner, p4_list, p4_version)
     print("NFCP P4 Library Combiner is running...")
     p4_generator.lib_combine_main()
 
@@ -136,7 +134,6 @@ def bess_code(conf_parser, all_nodes, final_bess_filename):
     final_bess_filename: BESS code filename
 
     """
-    bess_fp = open(final_bess_filename, 'w')
     BG.generate_bess(conf_parser, all_nodes)
 
 def fitp4(conf_parser, module_list, p4_filename, p4_version):
@@ -532,7 +529,7 @@ def heuristic_main():
         ND.p4_14_module_list = of_module
 
     print('Lemur ConfParser is running...')
-    conf_parser = configParser.nfcp_config_parser(config_filename)
+    conf_parser = configParser.Lemur_config_parser(config_filename)
     for flowspec_name, nfchain_name in conf_parser.scanner.flowspec_nfchain_mapping.items():
         chain_ll_node = conf_parser.scanner.struct_nlinkedlist_dict[nfchain_name]
         flowspec_instance = conf_parser.scanner.struct_nlist_dict[flowspec_name]

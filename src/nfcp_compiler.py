@@ -33,9 +33,8 @@ import logging
 import lemur_user_level_parser as configParser
 import lemur_p4lib_parser as libParser
 import lemur_code_generator as codeGenerator
-import nfcp_bess_generator as bessGenerator
 import util.lang_parser_helper as lang_helper
-import new_bess_generator as BG
+import lemur_bess_generator as BG
 import time
 from util.lemur_nf_node import *
 from core.lemur_p4_profiler import p4_usage_checker
@@ -190,7 +189,6 @@ def nfcp_compiler_main():
     p4_list = copy.deepcopy(all_p4_nodes)
 
     # Open BESS script
-    bess_fp = open(final_bess_filename, 'w')
     BG.generate_bess(conf_parser, all_nodes)
     '''
     writein_list = bessGenerator.convert_graph_to_bess(conf_parser, all_nodes)
