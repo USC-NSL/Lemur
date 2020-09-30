@@ -6,7 +6,7 @@ Lemur works as a cross-platform compiler. It parses NF chains from a user-level 
 ## Features
 (1) Flexible configuration of multiple network service chains <br>
 (2) Efficient heuristic algorithm for hardware deployment decision <br>
-(3) Involve 'minimum bounce', 'HW preferred', 'SW preferred', 'Greedy' algorithms as comparison altermatives
+(3) Involve 'minimum bounce', 'HW preferred', 'SW preferred', 'Greedy' algorithms as comparison altermatives <br>
 (4) Fast deployment on heterogeneous hardware (automatic code generation for P4 and BESS code)<br>
 
 # Build Instructions
