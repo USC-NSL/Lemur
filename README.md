@@ -40,17 +40,17 @@ AESCBC()-> VLANPush()->IPv4Forward()
 `chain_rate.txt`: Your [min, max] throughput settings for your service chains. One row contains one [min, max] throughput requirement for a service chain. The row order macthes with the service chain order. <br>
 
 ## Running Lemur
-(1) Run Lemur compiler with heuristic algorithm<br>
-Let's assume that you are trying to compile `chain_1.conf`. You will run the Lemur compiler by typing the following.<br>
+(1) Run Lemur compiler with heuristic algorithm in `src` directory<br>
+Let's assume that you are trying to compile `chain_0_1_2_3.conf`. You will run the Lemur compiler by typing the following.<br>
 ```bash
-$ python lemur_heuristic_compiler.py -f chain_1
+$ python lemur_heuristic_compiler.py -f chain_0_1_2_3
 ```
 
 The Lemur compiler will output two files. `nf.p4` is the final P4 code that incorporates all P4 NF nodes, while `intel_nic1.bess` is the final BESS configuration script that includes all BESS modules. The naming of BESS script is based on the nic information provided in `device.txt`. <br>
 
-(optional) If you would like to compare with the brutal force algorithm and other alternatives, type the following.
+(optional) If you would like to compare with the brutal force algorithm and other alternatives, type the following in `src` directory.
 ```bash
-$ python lemur_compiler -f chain_1
+$ python lemur_compiler.py -f chain_0_1_2_3
 ```
 The default algorithm is the brutal force algorithm. To change to other alternatives, you can set `-m {$MODE_NUMBER}` to switch. For more detail, please use `-h` to view options. 
 
