@@ -510,6 +510,7 @@ def heuristic_main():
     args = arg_parser.parse_args()
     enumerate_bool = args.iter
     of_flag = args.of
+    pisa_flag = args.pisa
     p4_version = args.lang[0]
     op_mode = args.mode
     input_filename = args.file
@@ -557,8 +558,10 @@ def heuristic_main():
     while(not stop_search):
         
         if state == 0: 
-            success = fitp4(conf_parser, node_list, final_p4_filename, p4_version)
-            #success = True  ## Skip remote compilation if the result is known 
+            if pisa_flag:
+                success = fitp4(conf_parser, node_list, final_p4_filename, p4_version)
+            else:
+                success = True  ## Skip remote compilation if the result is known 
             if success: state = 1.5
             else:  state = 1                   
 
