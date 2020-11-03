@@ -15,5 +15,4 @@ sudo python setup install
 
 (3) Get [Gurobi license](https://www.gurobi.com/downloads/end-user-license-agreement-academic/) and install license
 
-
-
+Note: according to some Lemur users, Lemur compiler may not work properly under academic licence outside the US.

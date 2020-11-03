@@ -8,8 +8,9 @@ sudo apt-get update
 sudo apt-get install default-jdk
 
 # Install pip
-sudo apt-get install python-pip
+#sudo apt-get install python-pip
 #sudo pip install --upgrade pip
+sudo python -m easy_install --upgrade pyOpenSSL
 
 # Install ANTLR
 cd ./env/antlr
@@ -23,6 +24,6 @@ sudo cpan Graph:Easy
 
 # Install python lib
 pip install paramiko --user
-pip isntall Pexpect --user
+pip install Pexpect --user
 pip install numpy --user
 pip install termcolor --user

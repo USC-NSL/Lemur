@@ -17,13 +17,26 @@ Lemur works as a cross-platform compiler. It parses NF chains from a user-level 
 $ git clone https://github.com/USC-NSL/Lemur.git
 ```
 
+(2) Check the Python version
+Lemur is tested with Python 2.7.12.<br>
+Please make sure you have the correct Python + Pip version.<br>
+We recommend using pyenv (https://github.com/pyenv/pyenv) to manage your Python local env.<br>
+
 (2) Install dependencies<br>
 ``` bash
 $ ./install_deps.sh
 ```
 
+Required dependencies:<br>
+* Numpy 1.15.4
+* paramiko 1.16.0
+* Pexpect 4.6.0
+* termcolor 1.1.0
+
 (3) Get Gurobi License<br>
 Please follow the instructions in /src folder to get your Gurobi license
+
+Note: according to some Lemur users, Lemur compiler may not work properly under academic licence outside the US.
 
 ## Configuring Lemur
 (1) Visit the `src` directory and define your service chain configuration file in the `user_level_example` directory<br>
