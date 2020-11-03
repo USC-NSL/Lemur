@@ -22,11 +22,12 @@ sudo apt-get install default-jdk
 sudo python -m easy_install --upgrade pyOpenSSL
 
 # Install ANTLR
-cd ./env/antlr
-sudo bash ./install_antlr.sh
+ANTLR_DIR=$THIS_DIR/env/antlr
+cd ${ANTLR_DIR}
+sudo bash ${ANTLR_DIR}/install_antlr.sh
 pwd
-cd ../..
 
+cd ${THIS_DIR}
 # Install Graph-Easy
 sudo apt-get install graphviz
 sudo cpan Graph:Easy
@@ -36,3 +37,4 @@ pip install paramiko --user
 pip install Pexpect --user
 pip install numpy --user
 pip install termcolor --user
+pip install antlr4-python2-runtime --user

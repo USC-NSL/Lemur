@@ -17,6 +17,3 @@ sudo echo "alias antlr4='java -Dfile.encoding=UTF-8 -Xmx500M -cp \"/usr/local/li
 
 # simplify the use of ANTLR to test the generated code
 sudo echo 'alias grun="java org.antlr.v4.gui.TestRig"' >> ~/.bash_profile
-
-# Install Python lib antlr
-pip install antlr4-python2-runtime
