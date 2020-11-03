@@ -114,6 +114,11 @@ def get_argparse():
         action='store_true',
         help='Replace P4 with Openflow'
     )
+    parser.add_argument(
+        '--pisa',
+        action='store_true',
+        help='enable p4 stage compilation check'
+    )
     return parser
 
 
