@@ -21,6 +21,7 @@ $ git clone https://github.com/USC-NSL/Lemur.git
 Lemur is tested with Python 2.7.12 + pip 20.2.4.<br>
 Please make sure you have the correct Python + pip version.<br>
 We recommend using pyenv (https://github.com/pyenv/pyenv) to manage your Python local env.<br>
+Also, you may refer to the comment section in install_deps.sh to install pyenv, Python, and pip properly.
 
 (2) Install dependencies<br>
 ``` bash
